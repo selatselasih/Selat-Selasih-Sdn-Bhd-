@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selat Selasih Sdn Bhd — Delivery Transactions</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brandmark">
+      <span class="scale-icon" role="img" aria-label="shrimp">🦐</span>
+      <div>
+        <h1>Selat Selasih Sdn Bhd</h1>
+        <div class="tagline">Weigh & Bill</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <nav class="tabs">
+        <button id="tab-weigh" class="active">Weigh in</button>
+        <button id="tab-ledger">Transactions</button>
+        <button id="tab-supplier">Supplier Payments</button>
+        <button id="tab-sheet">Monthly Report</button>
+      </nav>
+      <button class="icon-btn" id="settings-btn" title="Settings" aria-label="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E2420" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- WEIGH IN -->
+  <section id="view-weigh" class="active">
+    <div class="panel">
+      <div class="readout">
+        <div class="kg-side">
+          <input type="number" id="kg-input" placeholder="0.0" step="0.1" min="0" inputmode="decimal">
+          <span class="unit">kg</span>
+        </div>
+        <div class="amount-side">
+          <div class="amount-label">Amount due</div>
+          <div class="amount-value" id="amount-display">RM 0.00</div>
+        </div>
+      </div>
+
+      <div class="rate-line">
+        Rate: <span id="rate-display">RM 0.00</span> / kg — <button class="linklike" id="change-rate-link">change</button>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="date-input">Delivery date</label>
+          <input type="date" id="date-input">
+        </div>
+        <div class="field">
+          <label for="desc-input">Description</label>
+          <input type="text" id="desc-input" placeholder="e.g. Sale of Prawns">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="party-input">Customer name</label>
+          <input type="text" id="party-input" list="customer-list" placeholder="e.g. Big Head Shrimp Trading" autocomplete="off">
+          <datalist id="customer-list"></datalist>
+        </div>
+        <div class="field">
+          <label for="deposit-input">Deposit received (optional)</label>
+          <input type="number" id="deposit-input" step="0.01" min="0" placeholder="0.00">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="address-input">Customer address (saved for next time)</label>
+          <textarea id="address-input" rows="2" placeholder="No.6387, Machal Umboo, 78000 Alor Gajah, Melaka"></textarea>
+        </div>
+      </div>
+
+      <button class="record-btn" id="record-btn">Record delivery &amp; generate invoice</button>
+
+      <div class="slip" id="slip">
+        <div class="slip-card" id="slip-card"></div>
+        <div class="slip-actions" style="max-width:640px;margin:14px auto 0;">
+          <button id="print-btn">Print / save PDF</button>
+          <button id="new-entry-btn">New entry</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEDGER -->
+  <section id="view-ledger">
+    <div id="ledger-year-view">
+      <div class="year-row">
+        <select id="year-select"></select>
+        <div class="year-totals" id="year-totals"></div>
+      </div>
+      <div class="month-grid" id="month-grid"></div>
+    </div>
+
+    <div id="ledger-month-view" style="display:none;">
+      <button class="back-link" id="back-to-year">&larr; Back to <span id="back-year-label"></span></button>
+      <h2 id="month-title" style="font-family:'Fraunces',serif;font-size:22px;margin:0 0 14px;"></h2>
+      <div id="month-table-wrap"></div>
+    </div>
+  </section>
+
+  <!-- SUPPLIER PAYMENTS -->
+  <section id="view-supplier">
+    <div id="supplier-year-view">
+      <div class="year-row">
+        <select id="supplier-year-select"></select>
+        <div class="year-totals" id="supplier-year-totals"></div>
+        <button class="record-btn" style="width:auto;padding:9px 16px;font-size:13px;" id="add-supplier-btn">+ Add Payment</button>
+      </div>
+      <div class="month-grid" id="supplier-month-grid"></div>
+    </div>
+
+    <div id="supplier-month-view" style="display:none;">
+      <button class="back-link" id="supplier-back-to-year">&larr; Back to <span id="supplier-back-year-label"></span></button>
+      <h2 id="supplier-month-title" style="font-family:'Fraunces',serif;font-size:22px;margin:0 0 14px;"></h2>
+      <div id="supplier-month-table-wrap"></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="modal-bg" id="settings-modal">
+  <div class="modal">
+    <h2>Settings</h2>
+    <div class="field">
+      <label>Company name</label>
+      <input type="text" id="set-company">
+    </div>
+    <div class="field">
+      <label>Company reg. no (optional)</label>
+      <input type="text" id="set-regno">
+    </div>
+    <div class="field">
+      <label>Company address</label>
+      <textarea id="set-address" rows="2"></textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Currency symbol</label>
+        <input type="text" id="set-currency" maxlength="6">
+      </div>
+      <div class="field">
+        <label>Rate per kg</label>
+        <input type="number" id="set-rate" step="0.01" min="0">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Invoice prefix</label>
+        <input type="text" id="set-prefix" maxlength="6" placeholder="e.g. PR">
+      </div>
+      <div class="field">
+        <label>Default description</label>
+        <input type="text" id="set-desc" placeholder="e.g. Sale of Prawns">
+      </div>
+    </div>
+    <div class="field">
+      <label>Bank name</label>
+      <input type="text" id="set-bank">
+    </div>
+    <div class="field">
+      <label>Bank account no</label>
+      <input type="text" id="set-bankacc">
+    </div>
+    <div class="field">
+      <label>Google Sheet link</label>
+      <input type="url" id="set-sheeturl" placeholder="https://docs.google.com/spreadsheets/d/...">
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="settings-cancel">Cancel</button>
+      <button class="save" id="settings-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="supplier-modal">
+  <div class="modal">
+    <h2>Add Supplier Payment</h2>
+    <div class="field">
+      <label>Supplier / company name</label>
+      <input type="text" id="sup-company" placeholder="e.g. Ocean Fresh Supplies">
+    </div>
+    <div class="field">
+      <label>Invoice number</label>
+      <input type="text" id="sup-invoiceno" placeholder="e.g. INV-00214">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Purchase date</label>
+        <input type="date" id="sup-purchasedate">
+      </div>
+      <div class="field">
+        <label>Payment date</label>
+        <input type="date" id="sup-paymentdate">
+      </div>
+    </div>
+    <div class="field">
+      <label>Amount paid</label>
+      <input type="number" id="sup-amount" step="0.01" min="0" placeholder="0.00">
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="supplier-cancel">Cancel</button>
+      <button class="save" id="supplier-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="password-modal">
+  <div class="modal">
+    <h2 id="password-modal-title">Enter Password</h2>
+    <div class="field">
+      <input type="password" id="password-modal-input" autocomplete="off" placeholder="Password">
+      <div id="password-modal-error" style="color:var(--rust);font-size:12px;margin-top:6px;display:none;">Incorrect password.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="password-modal-cancel">Cancel</button>
+      <button class="save" id="password-modal-submit">Submit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const SETTINGS_PASSWORD = "Selat*1985"; // <-- change this to whatever password you want
+let settings = {
+  company:"Selat Selasih Sdn Bhd", regNo:"1180708-X", address:"No.6, Jalan Sentosa 30, Jalan Meru, 41050 Klang, Selangor Darul Ehsan.", currency:"RM", rate:72,
+  invoicePrefix:"PR", description:"Sale of Prawns", bankName:"", bankAcc:"", googleSheetUrl:""
+};
+let deliveries = [];
+let lastEntry = null;
+let customers = [];
+let currentYear = new Date().getFullYear();
+
+function fmtMoney(n){ return Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtMoneyC(n){ return settings.currency + " " + fmtMoney(n); }
+function fmtKg(n){ return Number(n).toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:2}) + " kg"; }
+function todayStr(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function ddmmyy(dateStr){ const [y,m,d]=dateStr.split('-'); return d+m+y.slice(2); }
+function displayDate(dateStr){ const [y,m,d]=dateStr.split('-'); return `${d}.${m}.${y}`; }
+function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s==null?'':s; return d.innerHTML; }
+
+const FIREBASE_DB_URL = "https://invoice-management-4e488-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+async function fbGet(path){
+  try{
+    const res = await fetch(`${FIREBASE_DB_URL}/${path}.json`);
+    if(!res.ok) return null;
+    return await res.json();
+  }catch(e){ console.error('Firebase read failed', e); return null; }
+}
+async function fbSet(path, value){
+  try{
+    const res = await fetch(`${FIREBASE_DB_URL}/${path}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(value)
+    });
+    return res.ok;
+  }catch(e){ console.error('Firebase write failed', e); return false; }
+}
+
+async function loadData(){
+  try{
+    const s = await fbGet('settings');
+    if(s){ settings = Object.assign({}, settings, s); }
+  }catch(e){}
+  try{
+    const d = await fbGet('deliveries');
+    if(d){ deliveries = d; }
+  }catch(e){ deliveries = []; }
+  try{
+    const c = await fbGet('customers');
+    if(c){ customers = c; }
+  }catch(e){ customers = []; }
+  try{
+    const sp = await fbGet('supplierPayments');
+    if(sp){ supplierPayments = sp; }
+  }catch(e){ supplierPayments = []; }
+}
+async function saveSettings(){ await fbSet('settings', settings); }
+async function saveDeliveries(){ await fbSet('deliveries', deliveries); }
+async function saveCustomers(){ await fbSet('customers', customers); }
+
+function refreshRateUI(){
+  document.getElementById('rate-display').textContent = fmtMoneyC(settings.rate);
+  updateAmount();
+}
+function updateAmount(){
+  const kg = parseFloat(document.getElementById('kg-input').value) || 0;
+  const amt = kg * settings.rate;
+  document.getElementById('amount-display').textContent = fmtMoneyC(amt);
+}
+
+function refreshCustomerList(){
+  const dl = document.getElementById('customer-list');
+  dl.innerHTML = customers.map(c => `<option value="${escapeHtml(c.name)}">`).join('');
+}
+
+function nextInvoiceNo(dateStr){
+  const base = settings.invoicePrefix + ddmmyy(dateStr);
+  const sameDay = deliveries.filter(d => d.date === dateStr).length;
+  return sameDay === 0 ? base : base + '-' + (sameDay + 1);
+}
+
+function renderSlip(entry){
+  lastEntry = entry;
+  const card = document.getElementById('slip-card');
+  const payable = entry.amount - (entry.deposit || 0);
+  const addrLines = (entry.address || '').split('\n').filter(Boolean).map(l => escapeHtml(l)).join('<br>');
+  const coAddrLines = (settings.address || '').split('\n').filter(Boolean).map(l => escapeHtml(l)).join(', ');
+  card.innerHTML = `
+    <div class="inv-co-name">${escapeHtml(settings.company)} ${settings.regNo ? `<span class="regno">(${escapeHtml(settings.regNo.replace(/^\(+|\)+$/g,''))})</span>` : ''}</div>
+    ${settings.address ? `<div class="inv-co-address">${coAddrLines}</div>` : ''}
+
+    <div class="inv-meta-row">
+      <div class="inv-billto">
+        <div class="lbl"> <br> Bill To :
+          </div>
+        <div class="name">${entry.party ? escapeHtml(entry.party) : '—'}</div>
+        ${addrLines ? `<div>${addrLines}</div>` : ''}
+      </div>
+      <div class="inv-title">
+        <h3>Invoice</h3>
+        <table class="inv-meta-table" style="margin-left:auto;">
+          <tr><td class="k">Invoice No</td><td class="sep">:</td><td>${entry.invoiceNo}</td></tr>
+          <tr><td class="k">Invoice Date</td><td class="sep">:</td><td>${displayDate(entry.date)}</td></tr>
+          <tr><td class="k">Terms</td><td class="sep">:</td><td>-</td></tr>
+          <tr><td class="k">Due Date</td><td class="sep">:</td><td>-</td></tr>
+          <tr><td class="k">Reference</td><td class="sep">:</td><td>-</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <table class="inv-items">
+      <thead>
+        <tr>
+          <th style="width:32px;">No</th>
+          <th>Description</th>
+          <th class="r">Unit Price<br>Amt (${escapeHtml(settings.currency)})</th>
+          <th class="r">Amount<br>(${escapeHtml(settings.currency)})</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>${escapeHtml(entry.description || settings.description)}<div class="sub">Weight : ${fmtKg(entry.kg)}</div></td>
+          <td class="r">${escapeHtml(settings.currency)}${fmtMoney(entry.rate)} / kg</td>
+          <td class="r">${fmtMoney(entry.amount)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="inv-totals">
+      <tr class="line"><td class="lbl">TOTAL AMOUNT:</td><td style="width:110px;">${fmtMoney(entry.amount)}</td></tr>
+      <tr><td class="lbl">LESS: DEPOSIT:</td><td>${entry.deposit ? fmtMoney(entry.deposit) : '-'}</td></tr>
+      <tr class="grand"><td class="lbl">TOTAL AMOUNT PAYABLE :</td><td>${fmtMoney(payable)}</td></tr>
+    </table>
+
+    ${(settings.bankName || settings.bankAcc) ? `
+    <div class="inv-bank">
+      All payment should be made to ${escapeHtml(settings.company)}.<br>
+      ${settings.bankName ? `Bank Name: ${escapeHtml(settings.bankName)}<br>` : ''}
+      ${settings.bankAcc ? `Bank Account No.: ${escapeHtml(settings.bankAcc)}` : ''}
+    </div>` : ''}
+
+    <div class="inv-footer">
+     <br>
+     All payment should be made to Selat Selasih Sdn. Bhd. <br>
+     Bank Name: Hong Leong <br>
+     Bank Account No.: 03600194674 <br>
+
+
+     This is a computer generated invoice, no signature is required
+     No signature is required
+     
+    </div>
+  `;
+  document.getElementById('slip').classList.add('show');
+}
+
+async function upsertCustomer(name, address){
+  if(!name) return;
+  const existing = customers.find(c => c.name.toLowerCase() === name.toLowerCase());
+  if(existing){
+    if(address && address !== existing.address){ existing.address = address; }
+  }else{
+    customers.push({ name, address: address || '' });
+  }
+  await saveCustomers();
+  refreshCustomerList();
+}
+
+async function recordDelivery(){
+  const kg = parseFloat(document.getElementById('kg-input').value);
+  if(!kg || kg <= 0){ alert("Enter a weight in kg greater than 0."); return; }
+  const date = document.getElementById('date-input').value || todayStr();
+  const party = document.getElementById('party-input').value.trim();
+  const address = document.getElementById('address-input').value.trim();
+  const description = document.getElementById('desc-input').value.trim();
+  const deposit = parseFloat(document.getElementById('deposit-input').value) || 0;
+  const rate = settings.rate;
+  const amount = kg * rate;
+  const invoiceNo = nextInvoiceNo(date);
+  const entry = { id: Date.now().toString(36)+Math.random().toString(36).slice(2,7), date, kg, rate, amount, deposit, invoiceNo, party, address, description };
+  deliveries.push(entry);
+  await saveDeliveries();
+  await upsertCustomer(party, address);
+  renderSlip(entry);
+  buildLedger();
+}
+
+function resetEntryForm(){
+  document.getElementById('kg-input').value = '';
+  document.getElementById('party-input').value = '';
+  document.getElementById('address-input').value = '';
+  document.getElementById('desc-input').value = '';
+  document.getElementById('deposit-input').value = '';
+  document.getElementById('date-input').value = todayStr();
+  document.getElementById('slip').classList.remove('show');
+  updateAmount();
+}
+
+/* autofill address when a saved customer name is chosen */
+document.addEventListener('DOMContentLoaded', () => {
+  const partyInput = document.getElementById('party-input');
+  partyInput.addEventListener('input', () => {
+    const match = customers.find(c => c.name.toLowerCase() === partyInput.value.trim().toLowerCase());
+    if(match){ document.getElementById('address-input').value = match.address || ''; }
+  });
+});
+
+/* ---------- LEDGER VIEW ---------- */
+function getYears(){
+  const ys = new Set(deliveries.map(d => parseInt(d.date.slice(0,4))));
+  ys.add(new Date().getFullYear());
+  return Array.from(ys).sort((a,b)=>b-a);
+}
+
+function buildLedger(){
+  const yearSelect = document.getElementById('year-select');
+  const years = getYears();
+  yearSelect.innerHTML = years.map(y => `<option value="${y}" ${y===currentYear?'selected':''}>${y}</option>`).join('');
+  renderYearGrid();
+}
+
+function renderYearGrid(){
+  const yearDeliveries = deliveries.filter(d => parseInt(d.date.slice(0,4)) === currentYear);
+  const totalKg = yearDeliveries.reduce((s,d)=>s+d.kg,0);
+  const totalAmt = yearDeliveries.reduce((s,d)=>s+d.amount,0);
+  document.getElementById('year-totals').innerHTML =
+    `<span>Deliveries: <b>${yearDeliveries.length}</b></span>
+     <span>Total kg: <b>${fmtKg(totalKg)}</b></span>
+     <span>Total billed: <b>${fmtMoneyC(totalAmt)}</b></span>`;
+
+  const grid = document.getElementById('month-grid');
+  grid.innerHTML = '';
+  for(let m=0;m<12;m++){
+    const monthDeliveries = yearDeliveries.filter(d => parseInt(d.date.slice(5,7))-1 === m);
+    const kg = monthDeliveries.reduce((s,d)=>s+d.kg,0);
+    const amt = monthDeliveries.reduce((s,d)=>s+d.amount,0);
+    const empty = monthDeliveries.length === 0;
+    const card = document.createElement('div');
+    card.className = 'month-card' + (empty ? ' empty' : '');
+    card.innerHTML = `
+      <div class="month-name">${MONTHS[m]}</div>
+      <div class="month-stat"><span>Deliveries</span><b>${monthDeliveries.length}</b></div>
+      <div class="month-stat"><span>Total kg</span><b>${fmtKg(kg)}</b></div>
+      <div class="month-stat"><span>Total billed</span><b>${fmtMoneyC(amt)}</b></div>
+    `;
+    if(!empty){
+      card.addEventListener('click', () => openMonth(m));
+    }
+    grid.appendChild(card);
+  }
+}
+
+function openMonth(monthIndex){
+  document.getElementById('ledger-year-view').style.display = 'none';
+  document.getElementById('ledger-month-view').style.display = 'block';
+  document.getElementById('back-year-label').textContent = currentYear;
+  document.getElementById('month-title').textContent = `${MONTHS[monthIndex]} ${currentYear}`;
+
+  const monthDeliveries = deliveries
+    .filter(d => parseInt(d.date.slice(0,4)) === currentYear && parseInt(d.date.slice(5,7))-1 === monthIndex)
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  const totalKg = monthDeliveries.reduce((s,d)=>s+d.kg,0);
+  const totalAmt = monthDeliveries.reduce((s,d)=>s+d.amount,0);
+
+  const wrap = document.getElementById('month-table-wrap');
+  if(monthDeliveries.length === 0){
+    wrap.innerHTML = `<div class="empty-state"><div class="big">No deliveries recorded</div>Nothing was weighed in this month.</div>`;
+    return;
+  }
+  const rows = monthDeliveries.map(d => `
+    <tr>
+      <td>${d.date}</td>
+      <td>${d.party ? escapeHtml(d.party) : "—"}</td>
+      <td class="mono">${d.invoiceNo}</td>
+      <td class="mono">${fmtKg(d.kg)}</td>
+      <td class="mono">${fmtMoneyC(d.amount)}</td>
+      <td><button class="rm-btn" data-id="${d.id}">Remove</button></td>
+    </tr>
+  `).join('');
+
+  wrap.innerHTML = `
+    <table class="daybook">
+      <thead><tr><th>Date</th><th>Customer</th><th class="mono">Invoice</th><th class="mono">Kg</th><th class="mono">Amount</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="3">Month total</td><td class="mono">${fmtKg(totalKg)}</td><td class="mono">${fmtMoneyC(totalAmt)}</td><td></td></tr></tfoot>
+    </table>
+  `;
+
+  wrap.querySelectorAll('.rm-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.target.getAttribute('data-id');
+      if(!confirm('Remove this delivery record?')) return;
+      deliveries = deliveries.filter(d => d.id !== id);
+      await saveDeliveries();
+      openMonth(monthIndex);
+      renderYearGrid();
+    });
+  });
+}
+
+/* ---------- SUPPLIER PAYMENTS ---------- */
+let supplierPayments = [];
+let supplierCurrentYear = new Date().getFullYear();
+
+async function saveSupplierPayments(){ await fbSet('supplierPayments', supplierPayments); }
+
+function buildSupplierView(){
+  const yearSelect = document.getElementById('supplier-year-select');
+  const ys = new Set(supplierPayments.map(p => parseInt(p.paymentDate.slice(0,4))));
+  ys.add(new Date().getFullYear());
+  const years = Array.from(ys).sort((a,b)=>b-a);
+  yearSelect.innerHTML = years.map(y => `<option value="${y}" ${y===supplierCurrentYear?'selected':''}>${y}</option>`).join('');
+  renderSupplierYearGrid();
+}
+
+function renderSupplierYearGrid(){
+  const yearPayments = supplierPayments.filter(p => parseInt(p.paymentDate.slice(0,4)) === supplierCurrentYear);
+  const totalAmt = yearPayments.reduce((s,p)=>s+p.amount,0);
+  document.getElementById('supplier-year-totals').innerHTML =
+    `<span>Payments made: <b>${yearPayments.length}</b></span>
+     <span>Total paid out: <b>${fmtMoneyC(totalAmt)}</b></span>`;
+
+  const grid = document.getElementById('supplier-month-grid');
+  grid.innerHTML = '';
+  for(let m=0;m<12;m++){
+    const monthPayments = yearPayments.filter(p => parseInt(p.paymentDate.slice(5,7))-1 === m);
+    const amt = monthPayments.reduce((s,p)=>s+p.amount,0);
+    const empty = monthPayments.length === 0;
+    const card = document.createElement('div');
+    card.className = 'month-card' + (empty ? ' empty' : '');
+    card.innerHTML = `
+      <div class="month-name">${MONTHS[m]}</div>
+      <div class="month-stat"><span>Payments</span><b>${monthPayments.length}</b></div>
+      <div class="month-stat"><span>Total paid out</span><b>${fmtMoneyC(amt)}</b></div>
+    `;
+    if(!empty){
+      card.addEventListener('click', () => openSupplierMonth(m));
+    }
+    grid.appendChild(card);
+  }
+}
+
+function openSupplierMonth(monthIndex){
+  document.getElementById('supplier-year-view').style.display = 'none';
+  document.getElementById('supplier-month-view').style.display = 'block';
+  document.getElementById('supplier-back-year-label').textContent = supplierCurrentYear;
+  document.getElementById('supplier-month-title').textContent = `${MONTHS[monthIndex]} ${supplierCurrentYear}`;
+
+  const monthPayments = supplierPayments
+    .filter(p => parseInt(p.paymentDate.slice(0,4)) === supplierCurrentYear && parseInt(p.paymentDate.slice(5,7))-1 === monthIndex)
+    .sort((a,b) => a.paymentDate.localeCompare(b.paymentDate));
+
+  const wrap = document.getElementById('supplier-month-table-wrap');
+  if(monthPayments.length === 0){
+    wrap.innerHTML = `<div class="empty-state"><div class="big">No payments recorded</div>Nothing was paid to suppliers this month.</div>`;
+    return;
+  }
+  const rows = monthPayments.map(p => `
+    <tr>
+      <td class="mono">${escapeHtml(p.invoiceNo)}</td>
+      <td>${p.purchaseDate || '—'}</td>
+      <td>${p.paymentDate}</td>
+      <td>${escapeHtml(p.company)}</td>
+      <td class="mono">${fmtMoneyC(p.amount)}</td>
+      <td><button class="rm-btn" data-id="${p.id}">Remove</button></td>
+    </tr>
+  `).join('');
+
+  const totalAmt = monthPayments.reduce((s,p)=>s+p.amount,0);
+
+  wrap.innerHTML = `
+    <table class="daybook">
+      <thead><tr><th class="mono">Invoice No</th><th>Purchase Date</th><th>Payment Date</th><th>Company</th><th class="mono">Amount</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="4">Month total</td><td class="mono">${fmtMoneyC(totalAmt)}</td><td></td></tr></tfoot>
+    </table>
+  `;
+
+  wrap.querySelectorAll('.rm-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.target.getAttribute('data-id');
+      if(!confirm('Remove this payment record?')) return;
+      supplierPayments = supplierPayments.filter(p => p.id !== id);
+      await saveSupplierPayments();
+      openSupplierMonth(monthIndex);
+      renderSupplierYearGrid();
+    });
+  });
+}
+
+function openSupplierModal(){
+  document.getElementById('sup-company').value = '';
+  document.getElementById('sup-invoiceno').value = '';
+  document.getElementById('sup-purchasedate').value = '';
+  document.getElementById('sup-paymentdate').value = todayStr();
+  document.getElementById('sup-amount').value = '';
+  document.getElementById('supplier-modal').classList.add('show');
+}
+function closeSupplierModal(){ document.getElementById('supplier-modal').classList.remove('show'); }
+
+/* ---------- NAV ---------- */
+function showView(id){
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('tab-weigh').classList.toggle('active', id === 'view-weigh');
+  document.getElementById('tab-ledger').classList.toggle('active', id === 'view-ledger');
+  document.getElementById('tab-supplier').classList.toggle('active', id === 'view-supplier');
+}
+
+/* ---------- SETTINGS MODAL ---------- */
+function openSettings(){
+  document.getElementById('set-company').value = settings.company;
+  document.getElementById('set-regno').value = settings.regNo;
+  document.getElementById('set-address').value = settings.address;
+  document.getElementById('set-currency').value = settings.currency;
+  document.getElementById('set-rate').value = settings.rate;
+  document.getElementById('set-prefix').value = settings.invoicePrefix;
+  document.getElementById('set-desc').value = settings.description;
+  document.getElementById('set-bank').value = settings.bankName;
+  document.getElementById('set-bankacc').value = settings.bankAcc;
+  document.getElementById('set-sheeturl').value = settings.googleSheetUrl || '';
+  document.getElementById('settings-modal').classList.add('show');
+}
+function closeSettings(){ document.getElementById('settings-modal').classList.remove('show'); }
+
+let passwordModalCallback = null;
+
+function askPassword(correctPassword, onSuccess, title){
+  passwordModalCallback = { correctPassword, onSuccess };
+  document.getElementById('password-modal-title').textContent = title || 'Enter Password';
+  document.getElementById('password-modal-input').value = '';
+  document.getElementById('password-modal-error').style.display = 'none';
+  document.getElementById('password-modal').classList.add('show');
+  document.getElementById('password-modal-input').focus();
+}
+function closePasswordModal(){
+  document.getElementById('password-modal').classList.remove('show');
+  passwordModalCallback = null;
+}
+function submitPasswordModal(){
+  if(!passwordModalCallback) return;
+  const entered = document.getElementById('password-modal-input').value;
+  if(entered === passwordModalCallback.correctPassword){
+    const cb = passwordModalCallback.onSuccess;
+    closePasswordModal();
+    cb();
+  }else{
+    document.getElementById('password-modal-error').style.display = 'block';
+  }
+}
+
+function openSettingsGated(){
+  askPassword(SETTINGS_PASSWORD, openSettings, 'Enter password to open Settings');
+}
+
+/* ---------- INIT ---------- */
+async function init(){
+  await loadData();
+  document.getElementById('date-input').value = todayStr();
+  document.getElementById('desc-input').value = settings.description;
+  refreshRateUI();
+  refreshCustomerList();
+  buildLedger();
+
+  document.getElementById('tab-weigh').addEventListener('click', () => showView('view-weigh'));
+  document.getElementById('tab-ledger').addEventListener('click', () => {
+    document.getElementById('ledger-year-view').style.display = 'block';
+    document.getElementById('ledger-month-view').style.display = 'none';
+    showView('view-ledger');
+  });
+
+  document.getElementById('tab-supplier').addEventListener('click', () => {
+    document.getElementById('supplier-year-view').style.display = 'block';
+    document.getElementById('supplier-month-view').style.display = 'none';
+    buildSupplierView();
+    showView('view-supplier');
+  });
+
+  document.getElementById('supplier-year-select').addEventListener('change', (e) => {
+    supplierCurrentYear = parseInt(e.target.value);
+    renderSupplierYearGrid();
+  });
+  document.getElementById('supplier-back-to-year').addEventListener('click', () => {
+    document.getElementById('supplier-year-view').style.display = 'block';
+    document.getElementById('supplier-month-view').style.display = 'none';
+  });
+
+  document.getElementById('add-supplier-btn').addEventListener('click', openSupplierModal);
+  document.getElementById('supplier-cancel').addEventListener('click', closeSupplierModal);
+  document.getElementById('supplier-save').addEventListener('click', async () => {
+    const company = document.getElementById('sup-company').value.trim();
+    const invoiceNo = document.getElementById('sup-invoiceno').value.trim();
+    const purchaseDate = document.getElementById('sup-purchasedate').value;
+    const paymentDate = document.getElementById('sup-paymentdate').value;
+    const amount = parseFloat(document.getElementById('sup-amount').value) || 0;
+    if(!company){ alert('Enter a supplier / company name.'); return; }
+    if(!paymentDate){ alert('Enter a payment date.'); return; }
+    if(!amount || amount <= 0){ alert('Enter an amount greater than 0.'); return; }
+    const entry = {
+      id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+      company, invoiceNo: invoiceNo || '—', purchaseDate, paymentDate, amount
+    };
+    supplierPayments.push(entry);
+    await saveSupplierPayments();
+    closeSupplierModal();
+    buildSupplierView();
+  });
+
+  document.getElementById('tab-sheet').addEventListener('click', () => {
+    if(!settings.googleSheetUrl){
+      alert('No Google Sheet link has been added yet. Open Settings (gear icon) and paste your Google Sheet link first.');
+      openSettingsGated();
+      return;
+    }
+    window.open(settings.googleSheetUrl, '_blank');
+  });
+
+  document.getElementById('kg-input').addEventListener('input', updateAmount);
+  document.getElementById('record-btn').addEventListener('click', recordDelivery);
+  document.getElementById('new-entry-btn').addEventListener('click', resetEntryForm);
+  const originalTitle = document.title;
+  document.getElementById('print-btn').addEventListener('click', () => {
+    if(lastEntry){
+      const safeName = (lastEntry.party || 'Invoice').replace(/[\\/:*?"<>|]/g, '').trim();
+      document.title = `${safeName} - ${lastEntry.invoiceNo}`;
+  }
+  window.print();
+});
+window.addEventListener('afterprint', () => { document.title = originalTitle; });
+  document.getElementById('change-rate-link').addEventListener('click', openSettingsGated);
+
+  const partyInput = document.getElementById('party-input');
+  partyInput.addEventListener('input', () => {
+    const match = customers.find(c => c.name.toLowerCase() === partyInput.value.trim().toLowerCase());
+    if(match){ document.getElementById('address-input').value = match.address || ''; }
+  });
+
+  document.getElementById('settings-btn').addEventListener('click', openSettingsGated);
+
+  document.getElementById('password-modal-cancel').addEventListener('click', closePasswordModal);
+  document.getElementById('password-modal-submit').addEventListener('click', submitPasswordModal);
+  document.getElementById('password-modal-input').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') submitPasswordModal();
+  });
+  document.getElementById('settings-cancel').addEventListener('click', closeSettings);
+  document.getElementById('settings-save').addEventListener('click', async () => {
+    settings.company = document.getElementById('set-company').value.trim() || 'My Business';
+    settings.regNo = document.getElementById('set-regno').value.trim();
+    settings.address = document.getElementById('set-address').value.trim();
+    settings.currency = document.getElementById('set-currency').value.trim() || 'RM';
+    settings.rate = parseFloat(document.getElementById('set-rate').value) || 0;
+    settings.invoicePrefix = document.getElementById('set-prefix').value.trim() || 'PR';
+    settings.description = document.getElementById('set-desc').value.trim() || 'Sale of Prawns';
+    settings.bankName = document.getElementById('set-bank').value.trim();
+    settings.bankAcc = document.getElementById('set-bankacc').value.trim();
+    settings.googleSheetUrl = document.getElementById('set-sheeturl').value.trim();
+    await saveSettings();
+    refreshRateUI();
+    if(!document.getElementById('desc-input').value){ document.getElementById('desc-input').value = settings.description; }
+    closeSettings();
+  });
+
+  document.getElementById('year-select').addEventListener('change', (e) => {
+    currentYear = parseInt(e.target.value);
+    renderYearGrid();
+  });
+  document.getElementById('back-to-year').addEventListener('click', () => {
+    document.getElementById('ledger-year-view').style.display = 'block';
+    document.getElementById('ledger-month-view').style.display = 'none';
+  });
+}
+init();
+</script>
+</body>
+</html>
