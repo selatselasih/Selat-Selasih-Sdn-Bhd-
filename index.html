@@ -247,7 +247,7 @@ function ddmmyy(dateStr){ const [y,m,d]=dateStr.split('-'); return d+m+y.slice(2
 function displayDate(dateStr){ const [y,m,d]=dateStr.split('-'); return `${d}.${m}.${y}`; }
 function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s==null?'':s; return d.innerHTML; }
 
-const FIREBASE_DB_URL = "https://invoice-management-4e488-default-rtdb.asia-southeast1.firebasedatabase.app";
+const FIREBASE_DB_URL = "https://selat-selasih-sdn-bhd-default-rtdb.asia-southeast1.firebasedatabase.app/";
 
 async function fbGet(path){
   try{
