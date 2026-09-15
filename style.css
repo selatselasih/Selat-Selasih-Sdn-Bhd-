@@ -12,7 +12,7 @@
   --white:#FFFDF8;
 }
 *{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
+html,body{margin:0;padding:0;overflow-x:hidden;}
 body{
   background:var(--paper);
   color:var(--ink);
@@ -37,13 +37,14 @@ h1{
 }
 .tagline{font-size:12px;color:var(--brass-dark);text-transform:uppercase;letter-spacing:0.12em;margin-top:2px;}
 
-nav.tabs{display:flex;gap:8px;}
+nav.tabs{display:flex;gap:8px;flex-wrap:wrap;}
 nav.tabs button{
   font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
   background:transparent;border:1.5px solid var(--ink);
   color:var(--ink);padding:9px 16px;cursor:pointer;
   border-radius:2px;letter-spacing:0.02em;
   transition:background .15s,color .15s;
+  white-space:nowrap;
 }
 nav.tabs button.active{background:var(--ink);color:var(--paper);}
 nav.tabs button:hover:not(.active){background:var(--line);}
@@ -51,7 +52,7 @@ nav.tabs button:hover:not(.active){background:var(--line);}
 .icon-btn{
   background:transparent;border:1.5px solid var(--ink);border-radius:2px;
   width:36px;height:36px;display:flex;align-items:center;justify-content:center;
-  cursor:pointer;color:var(--ink);
+  cursor:pointer;color:var(--ink);flex-shrink:0;
 }
 .icon-btn:hover{background:var(--line);}
 
@@ -81,19 +82,20 @@ section.active{display:block;}
   margin-bottom:22px;
   gap:20px;flex-wrap:wrap;
 }
-.readout .kg-side{display:flex;align-items:baseline;gap:10px;}
+.readout .kg-side{display:flex;align-items:baseline;gap:10px;flex:1;min-width:0;}
 .readout input[type=number]{
   font-family:'IBM Plex Mono',monospace;
   font-size:44px;font-weight:600;
   background:transparent;border:none;color:#F2E8C9;
-  width:180px;outline:none;
+  width:100%;max-width:180px;min-width:0;outline:none;
 }
 .readout input[type=number]::placeholder{color:#5c6259;}
-.readout .unit{font-family:'IBM Plex Mono',monospace;color:#B8863B;font-size:18px;}
+.readout .unit{font-family:'IBM Plex Mono',monospace;color:#B8863B;font-size:18px;flex-shrink:0;}
 .readout .amount-side{text-align:right;}
 .readout .amount-label{font-size:11px;color:#8a8f83;text-transform:uppercase;letter-spacing:0.1em;}
 .readout .amount-value{
   font-family:'IBM Plex Mono',monospace;font-size:30px;color:#F2E8C9;font-weight:600;
+  word-break:break-word;
 }
 
 .field-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
@@ -130,21 +132,23 @@ section.active{display:block;}
   max-width:640px;margin:0 auto;background:#ffffff;color:#111;
   border:1px solid #ccc;border-radius:2px;padding:36px 40px;
   font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;
+  overflow-x:auto;
 }
 .inv-co-name{text-align:center;font-weight:bold;font-size:17px;font-family:'Aharoni','Arial Hebrew',Arial,sans-serif;}
 .inv-co-name .regno{font-weight:normal;font-size:11px;}
 .inv-co-address{text-align:center;font-size:12px;margin-top:2px;font-family:'Aharoni','Arial Hebrew',Arial,sans-serif;}
-.inv-meta-row{display:flex;justify-content:space-between;margin-top:26px;gap:20px;}
-.inv-billto{font-size:12.5px;}
+.inv-meta-row{display:flex;justify-content:space-between;margin-top:26px;gap:20px;flex-wrap:wrap;}
+.inv-billto{font-size:12.5px;min-width:150px;}
 .inv-billto .lbl{font-weight:bold;}
 .inv-billto .name{font-weight:bold;margin-top:2px;}
-.inv-title{text-align:right;}
+.inv-title{text-align:right;min-width:150px;}
 .inv-title h3{font-family:'Caladea',Cambria,Georgia,serif;font-size:22px;margin:0 0 6px;text-decoration:underline;font-style:italic;font-weight:normal;text-align:center;}
+.inv-meta-table{width:100%;}
 .inv-meta-table td{font-size:12px;padding:1px 0;}
 .inv-meta-table td.k{font-weight:bold;padding-right:6px;white-space:nowrap;}
 .inv-meta-table td.sep{padding-right:4px;}
 .inv-meta-table td:last-child{text-align:left;min-width:90px;}
-.inv-items{width:100%;border-collapse:collapse;margin-top:24px;}
+.inv-items{width:100%;border-collapse:collapse;margin-top:24px;min-width:340px;}
 .inv-items th{text-align:left;font-size:11.5px;border-bottom:1.5px solid #111;padding:4px 6px 6px;}
 .inv-items th.r{text-align:right;}
 .inv-items td{font-size:12.5px;padding:8px 6px;vertical-align:top;}
@@ -158,9 +162,9 @@ section.active{display:block;}
 .inv-bank{margin-top:26px;font-size:12px;font-weight:bold;font-style:italic;line-height:1.6;}
 .inv-footer{margin-top:16px;font-size:11.5px;font-weight:bold;font-style:italic;line-height:1.6;}
 
-.slip-actions{display:flex;gap:10px;margin-top:18px;}
+.slip-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
 .slip-actions button{
-  flex:1;padding:9px;border:1.5px solid var(--ink);background:transparent;border-radius:4px;
+  flex:1;min-width:120px;padding:9px;border:1.5px solid var(--ink);background:transparent;border-radius:4px;
   font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;
 }
 .slip-actions button:hover{background:var(--line);}
@@ -194,7 +198,14 @@ section.active{display:block;}
   display:flex;align-items:center;gap:6px;
 }
 
-table.daybook{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+/* Ledger / Supplier table wrappers scroll horizontally on narrow screens
+   instead of squeezing columns or breaking the page layout. */
+#month-table-wrap, #supplier-month-table-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+table.daybook{width:100%;min-width:520px;border-collapse:collapse;background:var(--white);border:1px solid var(--line);border-radius:6px;overflow:hidden;}
 table.daybook th{
   text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;
   color:var(--brass-dark);padding:10px 14px;border-bottom:1.5px solid var(--ink);background:var(--paper-2);
@@ -258,4 +269,19 @@ table.daybook tfoot td{font-weight:600;border-top:2px solid var(--ink);border-bo
   .inv-meta-row{flex-direction:column;}
   .inv-title{text-align:left;}
   .slip-card{padding:24px 20px;}
+}
+
+/* Extra breakpoint for very narrow phones (iPhone SE, older Androids)
+   where the default spacing/padding is still a bit tight. */
+@media (max-width:400px){
+  body{padding:20px 12px 60px;}
+  .panel{padding:18px;}
+  h1{font-size:22px;}
+  .scale-icon{font-size:26px;}
+  nav.tabs button{padding:8px 12px;font-size:12px;}
+  .readout{padding:18px 16px;}
+  .readout input[type=number]{font-size:34px;}
+  .readout .amount-value{font-size:24px;}
+  .field-row{gap:12px;}
+  .field{min-width:100%;}
 }
