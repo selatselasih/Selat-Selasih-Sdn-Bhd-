@@ -206,6 +206,10 @@
       <label>Amount paid</label>
       <input type="number" id="sup-amount" step="0.01" min="0" placeholder="0.00">
     </div>
+    <div class="field">
+      <label>Notes (optional)</label>
+      <textarea id="sup-notes" rows="2" placeholder="e.g. Partial payment, paid by cheque, etc."></textarea>
+    </div>
     <div class="modal-actions">
       <button class="cancel" id="supplier-cancel">Cancel</button>
       <button class="save" id="supplier-save">Save</button>
@@ -595,6 +599,7 @@ function openSupplierMonth(monthIndex){
       <td>${p.paymentDate}</td>
       <td>${escapeHtml(p.company)}</td>
       <td class="mono">${fmtMoneyC(p.amount)}</td>
+      <td>${p.notes ? escapeHtml(p.notes) : '—'}</td>
       <td><button class="rm-btn" data-id="${p.id}">Remove</button></td>
     </tr>
   `).join('');
@@ -603,9 +608,9 @@ function openSupplierMonth(monthIndex){
 
   wrap.innerHTML = `
     <table class="daybook">
-      <thead><tr><th class="mono">Invoice No</th><th>Purchase Date</th><th>Payment Date</th><th>Company</th><th class="mono">Amount</th><th></th></tr></thead>
+      <thead><tr><th class="mono">Invoice No</th><th>Purchase Date</th><th>Payment Date</th><th>Company</th><th class="mono">Amount</th><th>Notes</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><td colspan="4">Month total</td><td class="mono">${fmtMoneyC(totalAmt)}</td><td></td></tr></tfoot>
+      <tfoot><tr><td colspan="4">Month total</td><td class="mono">${fmtMoneyC(totalAmt)}</td><td></td><td></td></tr></tfoot>
     </table>
   `;
 
@@ -627,6 +632,7 @@ function openSupplierModal(){
   document.getElementById('sup-purchasedate').value = '';
   document.getElementById('sup-paymentdate').value = todayStr();
   document.getElementById('sup-amount').value = '';
+  document.getElementById('sup-notes').value = '';
   document.getElementById('supplier-modal').classList.add('show');
 }
 function closeSupplierModal(){ document.getElementById('supplier-modal').classList.remove('show'); }
@@ -720,18 +726,21 @@ async function init(){
 
   document.getElementById('add-supplier-btn').addEventListener('click', openSupplierModal);
   document.getElementById('supplier-cancel').addEventListener('click', closeSupplierModal);
+
   document.getElementById('supplier-save').addEventListener('click', async () => {
     const company = document.getElementById('sup-company').value.trim();
     const invoiceNo = document.getElementById('sup-invoiceno').value.trim();
     const purchaseDate = document.getElementById('sup-purchasedate').value;
     const paymentDate = document.getElementById('sup-paymentdate').value;
     const amount = parseFloat(document.getElementById('sup-amount').value) || 0;
+    const notes = document.getElementById('sup-notes').value.trim();
     if(!company){ alert('Enter a supplier / company name.'); return; }
     if(!paymentDate){ alert('Enter a payment date.'); return; }
     if(!amount || amount <= 0){ alert('Enter an amount greater than 0.'); return; }
     const entry = {
       id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
-      company, invoiceNo: invoiceNo || '—', purchaseDate, paymentDate, amount
+      company, invoiceNo: invoiceNo || '—', purchaseDate, paymentDate, amount,
+      notes: notes || ''
     };
     supplierPayments.push(entry);
     await saveSupplierPayments();
@@ -801,6 +810,7 @@ window.addEventListener('afterprint', () => { document.title = originalTitle; })
     document.getElementById('ledger-year-view').style.display = 'block';
     document.getElementById('ledger-month-view').style.display = 'none';
   });
+
 }
 init();
 </script>
