@@ -599,7 +599,7 @@ function supplierRowHtml(p){
       <td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(p.amount)}</td>
       <td style="max-width:220px;" ${p.notes ? `title="${escapeHtml(p.notes)}"` : ''}>${p.notes ? escapeHtml(p.notes) : '—'}</td>
       <td style="white-space:nowrap;">
-        <button class="linklike edit-btn" data-id="${p.id}">Edit</button>
+        <button class="rm-btn edit-btn" data-id="${p.id}" style="margin-right:10px;">Edit</button>
         <button class="rm-btn" data-id="${p.id}">Remove</button>
       </td>
     </tr>
@@ -633,7 +633,7 @@ function attachSupplierRowHandlers(container, onChanged){
       if(entry) openSupplierModal(entry);
     });
   });
-  container.querySelectorAll('.rm-btn').forEach(btn => {
+  container.querySelectorAll('.rm-btn:not(.edit-btn)').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const id = e.target.getAttribute('data-id');
       if(!confirm('Remove this payment record?')) return;
