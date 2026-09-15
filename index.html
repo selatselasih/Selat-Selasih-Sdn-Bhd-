@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Selat Selasih Sdn Bhd — Delivery Transactions</title>
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="wrap">
@@ -51,10 +51,7 @@
       <div class="field-row">
         <div class="field">
           <label for="date-input">Delivery date</label>
-          <div class="date-field">
-            <input type="date" id="date-input" aria-label="Delivery date">
-            <div class="date-display" id="date-display" aria-hidden="true"></div>
-          </div>
+          <input type="date" id="date-input">
         </div>
         <div class="field">
           <label for="desc-input">Description</label>
@@ -250,28 +247,6 @@ function ddmmyy(dateStr){ const [y,m,d]=dateStr.split('-'); return d+m+y.slice(2
 function displayDate(dateStr){ const [y,m,d]=dateStr.split('-'); return `${d}.${m}.${y}`; }
 function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s==null?'':s; return d.innerHTML; }
 
-/* Formats a yyyy-mm-dd string as "Sep 15, 2026" — used for the custom
-   date-display overlay so the date always looks the same across every
-   browser/OS, instead of relying on each browser's native date-input
-   rendering (which iOS Safari in particular renders inconsistently). */
-function formatDateNice(dateStr){
-  if(!dateStr) return '';
-  const [y,m,d] = dateStr.split('-').map(Number);
-  if(!y || !m || !d) return '';
-  const dt = new Date(y, m-1, d);
-  return dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-}
-
-/* Keeps the custom-styled date-display div in sync with the real
-   (invisible) date input's current value. Call this any time
-   date-input's value changes programmatically or via the picker. */
-function updateDateDisplay(){
-  const el = document.getElementById('date-display');
-  if(!el) return;
-  const val = document.getElementById('date-input').value;
-  el.textContent = val ? formatDateNice(val) : 'Select date';
-}
-
 const FIREBASE_DB_URL = "https://selat-selasih-sdn-bhd-default-rtdb.asia-southeast1.firebasedatabase.app/";
 
 async function fbGet(path){
@@ -449,7 +424,6 @@ function resetEntryForm(){
   document.getElementById('desc-input').value = '';
   document.getElementById('deposit-input').value = '';
   document.getElementById('date-input').value = todayStr();
-  updateDateDisplay();
   document.getElementById('slip').classList.remove('show');
   updateAmount();
 }
@@ -716,7 +690,6 @@ function openSettingsGated(){
 async function init(){
   await loadData();
   document.getElementById('date-input').value = todayStr();
-  updateDateDisplay();
   document.getElementById('desc-input').value = settings.description;
   refreshRateUI();
   refreshCustomerList();
@@ -778,8 +751,6 @@ async function init(){
   document.getElementById('kg-input').addEventListener('input', updateAmount);
   document.getElementById('record-btn').addEventListener('click', recordDelivery);
   document.getElementById('new-entry-btn').addEventListener('click', resetEntryForm);
-  document.getElementById('date-input').addEventListener('input', updateDateDisplay);
-  document.getElementById('date-input').addEventListener('change', updateDateDisplay);
   const originalTitle = document.title;
   document.getElementById('print-btn').addEventListener('click', () => {
     if(lastEntry){
