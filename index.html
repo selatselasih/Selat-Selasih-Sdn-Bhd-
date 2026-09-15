@@ -520,7 +520,8 @@ function openMonth(monthIndex){
   `).join('');
 
   wrap.innerHTML = `
-    <table class="daybook">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+    <table class="daybook" style="min-width:600px;">
       <thead><tr>
         <th style="white-space:nowrap;">Date</th>
         <th>Customer</th>
@@ -532,6 +533,7 @@ function openMonth(monthIndex){
       <tbody>${rows}</tbody>
       <tfoot><tr><td colspan="3">Month total</td><td class="mono" style="white-space:nowrap;text-align:right;">${fmtKg(totalKg)}</td><td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(totalAmt)}</td><td></td></tr></tfoot>
     </table>
+    </div>
   `;
 
   wrap.querySelectorAll('.rm-btn').forEach(btn => {
@@ -609,7 +611,8 @@ function supplierRowHtml(p){
 function supplierTableHtml(list, totalLabel){
   const totalAmt = list.reduce((s,p)=>s+p.amount,0);
   return `
-    <table class="daybook" style="table-layout:auto;">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+    <table class="daybook" style="table-layout:auto;min-width:720px;">
       <thead><tr>
         <th class="mono" style="white-space:nowrap;">Invoice No</th>
         <th style="white-space:nowrap;">Purchase Date</th>
@@ -622,6 +625,7 @@ function supplierTableHtml(list, totalLabel){
       <tbody>${list.map(supplierRowHtml).join('')}</tbody>
       <tfoot><tr><td colspan="4">${totalLabel}</td><td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(totalAmt)}</td><td></td><td></td></tr></tfoot>
     </table>
+    </div>
   `;
 }
 
