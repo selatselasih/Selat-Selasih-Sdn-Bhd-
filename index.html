@@ -115,6 +115,10 @@
         <div class="year-totals" id="supplier-year-totals"></div>
         <button class="record-btn" style="width:auto;padding:9px 16px;font-size:13px;" id="add-supplier-btn">+ Add Payment</button>
       </div>
+      <div class="field" style="max-width:420px;margin:0 0 16px;">
+        <input type="text" id="supplier-search-input" placeholder="Search by company, invoice no, or notes..." autocomplete="off">
+      </div>
+      <div id="supplier-search-results" style="display:none;"></div>
       <div class="month-grid" id="supplier-month-grid"></div>
     </div>
 
@@ -506,20 +510,27 @@ function openMonth(monthIndex){
   }
   const rows = monthDeliveries.map(d => `
     <tr>
-      <td>${d.date}</td>
+      <td style="white-space:nowrap;">${d.date}</td>
       <td>${d.party ? escapeHtml(d.party) : "—"}</td>
-      <td class="mono">${d.invoiceNo}</td>
-      <td class="mono">${fmtKg(d.kg)}</td>
-      <td class="mono">${fmtMoneyC(d.amount)}</td>
-      <td><button class="rm-btn" data-id="${d.id}">Remove</button></td>
+      <td class="mono" style="white-space:nowrap;">${d.invoiceNo}</td>
+      <td class="mono" style="white-space:nowrap;text-align:right;">${fmtKg(d.kg)}</td>
+      <td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(d.amount)}</td>
+      <td style="white-space:nowrap;"><button class="rm-btn" data-id="${d.id}">Remove</button></td>
     </tr>
   `).join('');
 
   wrap.innerHTML = `
     <table class="daybook">
-      <thead><tr><th>Date</th><th>Customer</th><th class="mono">Invoice</th><th class="mono">Kg</th><th class="mono">Amount</th><th></th></tr></thead>
+      <thead><tr>
+        <th style="white-space:nowrap;">Date</th>
+        <th>Customer</th>
+        <th class="mono" style="white-space:nowrap;">Invoice</th>
+        <th class="mono" style="white-space:nowrap;text-align:right;">Kg</th>
+        <th class="mono" style="white-space:nowrap;text-align:right;">Amount</th>
+        <th></th>
+      </tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><td colspan="3">Month total</td><td class="mono">${fmtKg(totalKg)}</td><td class="mono">${fmtMoneyC(totalAmt)}</td><td></td></tr></tfoot>
+      <tfoot><tr><td colspan="3">Month total</td><td class="mono" style="white-space:nowrap;text-align:right;">${fmtKg(totalKg)}</td><td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(totalAmt)}</td><td></td></tr></tfoot>
     </table>
   `;
 
@@ -577,6 +588,39 @@ function renderSupplierYearGrid(){
   }
 }
 
+function supplierRowHtml(p){
+  return `
+    <tr>
+      <td class="mono" style="white-space:nowrap;">${escapeHtml(p.invoiceNo)}</td>
+      <td style="white-space:nowrap;">${p.purchaseDate || '—'}</td>
+      <td style="white-space:nowrap;">${p.paymentDate}</td>
+      <td>${escapeHtml(p.company)}</td>
+      <td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(p.amount)}</td>
+      <td style="max-width:220px;" ${p.notes ? `title="${escapeHtml(p.notes)}"` : ''}>${p.notes ? escapeHtml(p.notes) : '—'}</td>
+      <td style="white-space:nowrap;"><button class="rm-btn" data-id="${p.id}">Remove</button></td>
+    </tr>
+  `;
+}
+
+function supplierTableHtml(list, totalLabel){
+  const totalAmt = list.reduce((s,p)=>s+p.amount,0);
+  return `
+    <table class="daybook" style="table-layout:auto;">
+      <thead><tr>
+        <th class="mono" style="white-space:nowrap;">Invoice No</th>
+        <th style="white-space:nowrap;">Purchase Date</th>
+        <th style="white-space:nowrap;">Payment Date</th>
+        <th>Company</th>
+        <th class="mono" style="white-space:nowrap;text-align:right;">Amount</th>
+        <th>Notes</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${list.map(supplierRowHtml).join('')}</tbody>
+      <tfoot><tr><td colspan="4">${totalLabel}</td><td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(totalAmt)}</td><td></td><td></td></tr></tfoot>
+    </table>
+  `;
+}
+
 function openSupplierMonth(monthIndex){
   document.getElementById('supplier-year-view').style.display = 'none';
   document.getElementById('supplier-month-view').style.display = 'block';
@@ -592,27 +636,8 @@ function openSupplierMonth(monthIndex){
     wrap.innerHTML = `<div class="empty-state"><div class="big">No payments recorded</div>Nothing was paid to suppliers this month.</div>`;
     return;
   }
-  const rows = monthPayments.map(p => `
-    <tr>
-      <td class="mono">${escapeHtml(p.invoiceNo)}</td>
-      <td>${p.purchaseDate || '—'}</td>
-      <td>${p.paymentDate}</td>
-      <td>${escapeHtml(p.company)}</td>
-      <td class="mono">${fmtMoneyC(p.amount)}</td>
-      <td>${p.notes ? escapeHtml(p.notes) : '—'}</td>
-      <td><button class="rm-btn" data-id="${p.id}">Remove</button></td>
-    </tr>
-  `).join('');
 
-  const totalAmt = monthPayments.reduce((s,p)=>s+p.amount,0);
-
-  wrap.innerHTML = `
-    <table class="daybook">
-      <thead><tr><th class="mono">Invoice No</th><th>Purchase Date</th><th>Payment Date</th><th>Company</th><th class="mono">Amount</th><th>Notes</th><th></th></tr></thead>
-      <tbody>${rows}</tbody>
-      <tfoot><tr><td colspan="4">Month total</td><td class="mono">${fmtMoneyC(totalAmt)}</td><td></td><td></td></tr></tfoot>
-    </table>
-  `;
+  wrap.innerHTML = supplierTableHtml(monthPayments, 'Month total');
 
   wrap.querySelectorAll('.rm-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
@@ -621,6 +646,48 @@ function openSupplierMonth(monthIndex){
       supplierPayments = supplierPayments.filter(p => p.id !== id);
       await saveSupplierPayments();
       openSupplierMonth(monthIndex);
+      renderSupplierYearGrid();
+    });
+  });
+}
+
+function renderSupplierSearchResults(query){
+  const box = document.getElementById('supplier-search-results');
+  const grid = document.getElementById('supplier-month-grid');
+  const q = query.trim().toLowerCase();
+
+  if(!q){
+    box.style.display = 'none';
+    box.innerHTML = '';
+    grid.style.display = '';
+    return;
+  }
+
+  grid.style.display = 'none';
+  const matches = supplierPayments
+    .filter(p =>
+      (p.company && p.company.toLowerCase().includes(q)) ||
+      (p.invoiceNo && p.invoiceNo.toLowerCase().includes(q)) ||
+      (p.notes && p.notes.toLowerCase().includes(q))
+    )
+    .sort((a,b) => b.paymentDate.localeCompare(a.paymentDate));
+
+  if(matches.length === 0){
+    box.innerHTML = `<div class="empty-state"><div class="big">No matches</div>No supplier payments match "${escapeHtml(query.trim())}".</div>`;
+    box.style.display = 'block';
+    return;
+  }
+
+  box.innerHTML = supplierTableHtml(matches, `${matches.length} result${matches.length===1?'':'s'}`);
+  box.style.display = 'block';
+
+  box.querySelectorAll('.rm-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.target.getAttribute('data-id');
+      if(!confirm('Remove this payment record?')) return;
+      supplierPayments = supplierPayments.filter(p => p.id !== id);
+      await saveSupplierPayments();
+      renderSupplierSearchResults(document.getElementById('supplier-search-input').value);
       renderSupplierYearGrid();
     });
   });
@@ -711,8 +778,14 @@ async function init(){
   document.getElementById('tab-supplier').addEventListener('click', () => {
     document.getElementById('supplier-year-view').style.display = 'block';
     document.getElementById('supplier-month-view').style.display = 'none';
+    document.getElementById('supplier-search-input').value = '';
+    renderSupplierSearchResults('');
     buildSupplierView();
     showView('view-supplier');
+  });
+
+  document.getElementById('supplier-search-input').addEventListener('input', (e) => {
+    renderSupplierSearchResults(e.target.value);
   });
 
   document.getElementById('supplier-year-select').addEventListener('change', (e) => {
@@ -746,6 +819,7 @@ async function init(){
     await saveSupplierPayments();
     closeSupplierModal();
     buildSupplierView();
+    renderSupplierSearchResults(document.getElementById('supplier-search-input').value);
   });
 
   document.getElementById('tab-sheet').addEventListener('click', () => {
