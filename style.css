@@ -110,24 +110,29 @@ section.active{display:block;}
 .field textarea{resize:vertical;min-height:40px;font-family:'Inter',sans-serif;}
 .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--brass);outline-offset:0;}
 
-/* iOS Safari renders type=date with its own native chrome and largely
-   ignores generic input styling. These rules force it to match the
-   width, height, padding and font of the other fields on the form. */
-.field input[type=date]{
+/* iOS Safari renders type=date with its own internal widget that
+   ignores text-align, font-family and font-weight almost entirely —
+   no CSS trick fixes that reliably. Instead, the native input is made
+   fully invisible but still clickable/tappable (so it still opens
+   Apple's date picker), and a custom-styled div on top shows the date
+   exactly like every other field: left-aligned, same font, same size. */
+.date-field{position:relative;}
+.date-field input[type=date]{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  margin:0;padding:0;border:none;
+  opacity:0;
   -webkit-appearance:none;appearance:none;
-  width:100%;min-width:0;max-width:100%;
-  display:block;
-  line-height:1.3;
-  font-family:'Inter',sans-serif;
-  color:var(--ink);
-  background:var(--paper);
+  cursor:pointer;
+  z-index:2;
 }
-.field input[type=date]::-webkit-date-and-time-value{
-  text-align:left;
-  min-width:0;
-}
-.field input[type=date]::-webkit-datetime-edit{
-  padding:0;
+.date-display{
+  width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:4px;
+  font-family:'Inter',sans-serif;font-size:16px;font-weight:400;line-height:1.3;
+  background:var(--paper);color:var(--ink);
+  pointer-events:none;
+  min-height:20px;
+  box-sizing:border-box;
 }
 
 .rate-line{font-size:12px;color:#66665f;margin-bottom:20px;}
