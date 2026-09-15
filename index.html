@@ -187,7 +187,7 @@
 
 <div class="modal-bg" id="supplier-modal">
   <div class="modal">
-    <h2>Add Supplier Payment</h2>
+    <h2 id="supplier-modal-title">Add Supplier Payment</h2>
     <div class="field">
       <label>Supplier / company name</label>
       <input type="text" id="sup-company" placeholder="e.g. Ocean Fresh Supplies">
@@ -549,6 +549,7 @@ function openMonth(monthIndex){
 /* ---------- SUPPLIER PAYMENTS ---------- */
 let supplierPayments = [];
 let supplierCurrentYear = new Date().getFullYear();
+let editingSupplierId = null; // id of the payment being edited, or null when adding a new one
 
 async function saveSupplierPayments(){ await fbSet('supplierPayments', supplierPayments); }
 
@@ -597,7 +598,10 @@ function supplierRowHtml(p){
       <td>${escapeHtml(p.company)}</td>
       <td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(p.amount)}</td>
       <td style="max-width:220px;" ${p.notes ? `title="${escapeHtml(p.notes)}"` : ''}>${p.notes ? escapeHtml(p.notes) : '—'}</td>
-      <td style="white-space:nowrap;"><button class="rm-btn" data-id="${p.id}">Remove</button></td>
+      <td style="white-space:nowrap;">
+        <button class="linklike edit-btn" data-id="${p.id}">Edit</button>
+        <button class="rm-btn" data-id="${p.id}">Remove</button>
+      </td>
     </tr>
   `;
 }
@@ -621,6 +625,26 @@ function supplierTableHtml(list, totalLabel){
   `;
 }
 
+function attachSupplierRowHandlers(container, onChanged){
+  container.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.target.getAttribute('data-id');
+      const entry = supplierPayments.find(p => p.id === id);
+      if(entry) openSupplierModal(entry);
+    });
+  });
+  container.querySelectorAll('.rm-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.target.getAttribute('data-id');
+      if(!confirm('Remove this payment record?')) return;
+      supplierPayments = supplierPayments.filter(p => p.id !== id);
+      await saveSupplierPayments();
+      onChanged();
+      renderSupplierYearGrid();
+    });
+  });
+}
+
 function openSupplierMonth(monthIndex){
   document.getElementById('supplier-year-view').style.display = 'none';
   document.getElementById('supplier-month-view').style.display = 'block';
@@ -638,17 +662,7 @@ function openSupplierMonth(monthIndex){
   }
 
   wrap.innerHTML = supplierTableHtml(monthPayments, 'Month total');
-
-  wrap.querySelectorAll('.rm-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const id = e.target.getAttribute('data-id');
-      if(!confirm('Remove this payment record?')) return;
-      supplierPayments = supplierPayments.filter(p => p.id !== id);
-      await saveSupplierPayments();
-      openSupplierMonth(monthIndex);
-      renderSupplierYearGrid();
-    });
-  });
+  attachSupplierRowHandlers(wrap, () => openSupplierMonth(monthIndex));
 }
 
 function renderSupplierSearchResults(query){
@@ -680,29 +694,24 @@ function renderSupplierSearchResults(query){
 
   box.innerHTML = supplierTableHtml(matches, `${matches.length} result${matches.length===1?'':'s'}`);
   box.style.display = 'block';
-
-  box.querySelectorAll('.rm-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const id = e.target.getAttribute('data-id');
-      if(!confirm('Remove this payment record?')) return;
-      supplierPayments = supplierPayments.filter(p => p.id !== id);
-      await saveSupplierPayments();
-      renderSupplierSearchResults(document.getElementById('supplier-search-input').value);
-      renderSupplierYearGrid();
-    });
-  });
+  attachSupplierRowHandlers(box, () => renderSupplierSearchResults(document.getElementById('supplier-search-input').value));
 }
 
-function openSupplierModal(){
-  document.getElementById('sup-company').value = '';
-  document.getElementById('sup-invoiceno').value = '';
-  document.getElementById('sup-purchasedate').value = '';
-  document.getElementById('sup-paymentdate').value = todayStr();
-  document.getElementById('sup-amount').value = '';
-  document.getElementById('sup-notes').value = '';
+function openSupplierModal(existing){
+  editingSupplierId = existing ? existing.id : null;
+  document.getElementById('supplier-modal-title').textContent = existing ? 'Edit Supplier Payment' : 'Add Supplier Payment';
+  document.getElementById('sup-company').value = existing ? existing.company : '';
+  document.getElementById('sup-invoiceno').value = existing ? (existing.invoiceNo === '—' ? '' : existing.invoiceNo) : '';
+  document.getElementById('sup-purchasedate').value = existing ? (existing.purchaseDate || '') : '';
+  document.getElementById('sup-paymentdate').value = existing ? existing.paymentDate : todayStr();
+  document.getElementById('sup-amount').value = existing ? existing.amount : '';
+  document.getElementById('sup-notes').value = existing ? (existing.notes || '') : '';
   document.getElementById('supplier-modal').classList.add('show');
 }
-function closeSupplierModal(){ document.getElementById('supplier-modal').classList.remove('show'); }
+function closeSupplierModal(){
+  document.getElementById('supplier-modal').classList.remove('show');
+  editingSupplierId = null;
+}
 
 /* ---------- NAV ---------- */
 function showView(id){
@@ -797,7 +806,7 @@ async function init(){
     document.getElementById('supplier-month-view').style.display = 'none';
   });
 
-  document.getElementById('add-supplier-btn').addEventListener('click', openSupplierModal);
+  document.getElementById('add-supplier-btn').addEventListener('click', () => openSupplierModal());
   document.getElementById('supplier-cancel').addEventListener('click', closeSupplierModal);
 
   document.getElementById('supplier-save').addEventListener('click', async () => {
@@ -810,12 +819,24 @@ async function init(){
     if(!company){ alert('Enter a supplier / company name.'); return; }
     if(!paymentDate){ alert('Enter a payment date.'); return; }
     if(!amount || amount <= 0){ alert('Enter an amount greater than 0.'); return; }
-    const entry = {
-      id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
-      company, invoiceNo: invoiceNo || '—', purchaseDate, paymentDate, amount,
-      notes: notes || ''
-    };
-    supplierPayments.push(entry);
+
+    if(editingSupplierId){
+      const existing = supplierPayments.find(p => p.id === editingSupplierId);
+      if(existing){
+        existing.company = company;
+        existing.invoiceNo = invoiceNo || '—';
+        existing.purchaseDate = purchaseDate;
+        existing.paymentDate = paymentDate;
+        existing.amount = amount;
+        existing.notes = notes || '';
+      }
+    }else{
+      supplierPayments.push({
+        id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+        company, invoiceNo: invoiceNo || '—', purchaseDate, paymentDate, amount,
+        notes: notes || ''
+      });
+    }
     await saveSupplierPayments();
     closeSupplierModal();
     buildSupplierView();
