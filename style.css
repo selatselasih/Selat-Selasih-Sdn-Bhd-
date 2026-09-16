@@ -28,17 +28,6 @@ header.top{
   padding-bottom:16px;margin-bottom:28px;
   flex-wrap:wrap;gap:12px;
 }
-/* This div is the nav+settings wrapper in the HTML (header.top's second
-   child). flex:1 gives it flex-basis:0, which secretly tells the browser
-   "this item takes no space" when deciding whether header.top should wrap
-   — so it never wraps, and instead the tabs get squeezed into whatever
-   sliver is left after the brand name. Forcing header.top to stack
-   vertically below this breakpoint sidesteps that and gives the tab row
-   the full width to scroll within. */
-@media (max-width:640px){
-  header.top{flex-direction:column;align-items:stretch;}
-  header.top > div:not(.brandmark){width:100%;}
-}
 .brandmark{display:flex;align-items:center;gap:12px;}
 .scale-icon{font-size:32px;line-height:1;flex-shrink:0;}
 h1{
