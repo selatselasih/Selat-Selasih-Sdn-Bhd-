@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Selat Selasih Sdn Bhd — Delivery Transactions</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=4">
 <style>
   /* Reliable truncation for table cells (company / notes) regardless
      of the table's layout mode. A nested block element respects
@@ -85,7 +85,7 @@
         <div class="tagline">Weigh & Bill</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
       <nav class="tabs">
         <button id="tab-weigh" class="active">Weigh in</button>
         <button id="tab-ledger">Transactions</button>
@@ -409,7 +409,6 @@
 <div class="modal-bg" id="condo-settings-modal">
   <div class="modal">
     <h2>Manage Units</h2>
-    <p style="font-size:12.5px;color:#66665f;margin:0 0 14px;">Rename a unit, set its expected monthly rent (used to flag unpaid months), or add a new one.</p>
     <div id="condo-settings-body"></div>
     <button class="btn-sm" id="condo-add-unit-btn" style="margin-top:4px;">+ Add another unit</button>
     <div class="modal-actions">
@@ -492,6 +491,10 @@ async function loadData(){
     const cer = await fbGet('condoExpectedRent');
     if(cer){ condoExpectedRent = cer; }
   }catch(e){ condoExpectedRent = {}; }
+  try{
+    const ct = await fbGet('condoTenants');
+    if(ct){ condoTenants = ct; }
+  }catch(e){ condoTenants = {}; }
 }
 async function saveSettings(){ await fbSet('settings', settings); }
 async function saveDeliveries(){ await fbSet('deliveries', deliveries); }
@@ -949,6 +952,7 @@ let condoUnits = DEFAULT_CONDO_UNITS.slice();
 let condoRent = [];      // {id, unit, month:'2026-09', amount, dateReceived, notes}
 let condoExpenses = [];  // {id, unit, date, category, amount, notes}
 let condoExpectedRent = {}; // {unit: monthlyAmount} — used to flag unpaid months
+let condoTenants = {};      // {unit: tenantName}
 let condoCurrentYear = new Date().getFullYear();
 let condoModalUnit = null;
 let editingCondoRentId = null;
@@ -959,6 +963,7 @@ async function saveCondoExpenses(){ await fbSet('condoExpenses', condoExpenses);
 async function saveCondoSettings(){
   await fbSet('condoUnits', condoUnits);
   await fbSet('condoExpectedRent', condoExpectedRent);
+  await fbSet('condoTenants', condoTenants);
 }
 
 function monthKey(year, monthIndex){
@@ -1020,11 +1025,11 @@ function renderCondoUnits(){
       if(st.status !== 'paid') unpaidCount++;
       rentRows.push(`
         <tr>
-          <td style="white-space:nowrap;">${MONTHS[m].slice(0,3)}</td>
-          <td class="mono" style="white-space:nowrap;text-align:right;">${st.received ? fmtMoneyC(st.received) : '—'}</td>
-          <td style="white-space:nowrap;">${pillHtml(st.status)}</td>
-          <td style="white-space:nowrap;text-align:right;">
-            <button class="rm-btn condo-rent-add" data-unit="${escapeHtml(unit)}" data-month="${m}">${st.received ? 'Edit' : 'Record'}</button>
+          <td style="white-space:nowrap;padding:8px 10px;">${MONTHS[m].slice(0,3)}</td>
+          <td class="mono" style="white-space:nowrap;text-align:right;padding:8px 10px;">${st.received ? fmtMoneyC(st.received) : '—'}</td>
+          <td style="white-space:nowrap;text-align:center;padding:8px 8px;">${pillHtml(st.status)}</td>
+          <td style="white-space:nowrap;text-align:right;padding:8px 10px;">
+            <button class="rm-btn condo-rent-add" data-unit="${escapeHtml(unit)}" data-month="${m}" style="font-size:12.5px;">${st.received ? 'Edit' : 'Add'}</button>
           </td>
         </tr>
       `);
@@ -1049,7 +1054,10 @@ function renderCondoUnits(){
     return `
       <div class="condo-unit">
         <div class="condo-unit-head">
-          <div class="condo-unit-name">${escapeHtml(unit)}</div>
+          <div>
+            <div class="condo-unit-name">${escapeHtml(unit)}</div>
+            ${condoTenants[unit] ? `<div style="font-size:12.5px;color:#66665f;margin-top:2px;">Tenant: ${escapeHtml(condoTenants[unit])}</div>` : `<div style="font-size:12.5px;color:#a8a99f;margin-top:2px;font-style:italic;">No tenant on file</div>`}
+          </div>
           <div class="condo-unit-stats">
             <span>Rent collected<b>${fmtMoneyC(totalRent)}</b></span>
             <span>Expenses<b>${fmtMoneyC(totalExp)}</b></span>
@@ -1062,16 +1070,17 @@ function renderCondoUnits(){
           <div class="condo-sub-title">Rent received</div>
         </div>
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-          <table class="daybook" style="min-width:360px;">
+          <table class="daybook" style="min-width:0;">
             <thead><tr>
-              <th style="white-space:nowrap;">Month</th>
-              <th class="mono" style="white-space:nowrap;text-align:right;">Received</th>
-              <th style="white-space:nowrap;">Status</th>
-              <th></th>
+              <th style="white-space:nowrap;padding:8px 10px;">Month</th>
+              <th class="mono" style="white-space:nowrap;text-align:right;padding:8px 10px;">Received</th>
+              <th style="white-space:nowrap;text-align:center;padding:8px 8px;">Status</th>
+              <th style="padding:8px 10px;"></th>
             </tr></thead>
             <tbody>${rentRows.join('')}</tbody>
           </table>
         </div>
+        <div style="font-size:11px;color:#a8a99f;margin-top:4px;">Swipe left/right if a row runs off screen</div>
 
         <div class="condo-sub-head">
           <div class="condo-sub-title">Expenses</div>
@@ -1170,7 +1179,7 @@ function closeCondoExpModal(){
    keeps the unit's ORIGINAL name in data-original so that on save we
    can migrate existing rent/expense records to the new name — without
    that, renaming a unit would orphan all of its history. */
-function condoUnitRowHtml(unit, expected){
+function condoUnitRowHtml(unit, expected, tenant){
   return `
     <div class="condo-unit-edit" style="border:1px solid var(--line);border-radius:4px;padding:12px;margin-bottom:10px;">
       <div class="field-row" style="margin-bottom:0;">
@@ -1183,14 +1192,18 @@ function condoUnitRowHtml(unit, expected){
           <input type="number" class="condo-expected-inp" step="0.01" min="0" value="${expected || ''}" placeholder="0.00">
         </div>
       </div>
-      <button class="rm-btn condo-remove-unit" style="margin-top:8px;">Remove this unit</button>
+      <div class="field" style="margin-top:12px;margin-bottom:0;">
+        <label>Tenant name (optional)</label>
+        <input type="text" class="condo-tenant-inp" value="${escapeHtml(tenant || '')}" placeholder="e.g. Ahmad Faiz">
+      </div>
+      <button class="rm-btn condo-remove-unit" style="margin-top:10px;">Remove this unit</button>
     </div>
   `;
 }
 
 function openCondoSettings(){
   document.getElementById('condo-settings-body').innerHTML =
-    condoUnits.map(u => condoUnitRowHtml(u, condoExpectedRent[u])).join('');
+    condoUnits.map(u => condoUnitRowHtml(u, condoExpectedRent[u], condoTenants[u])).join('');
   attachCondoSettingsHandlers();
   document.getElementById('condo-settings-modal').classList.add('show');
 }
@@ -1435,13 +1448,14 @@ window.addEventListener('afterprint', () => { document.title = originalTitle; })
 
   document.getElementById('condo-settings-cancel').addEventListener('click', closeCondoSettings);
   document.getElementById('condo-add-unit-btn').addEventListener('click', () => {
-    document.getElementById('condo-settings-body').insertAdjacentHTML('beforeend', condoUnitRowHtml('', ''));
+    document.getElementById('condo-settings-body').insertAdjacentHTML('beforeend', condoUnitRowHtml('', '', ''));
     attachCondoSettingsHandlers();
   });
   document.getElementById('condo-settings-save').addEventListener('click', async () => {
     const rows = Array.from(document.querySelectorAll('.condo-unit-edit'));
     const newUnits = [];
     const newExpected = {};
+    const newTenants = {};
     const renames = []; // {from, to} — applied to existing records below
 
     for(const row of rows){
@@ -1456,6 +1470,8 @@ window.addEventListener('afterprint', () => { document.title = originalTitle; })
       newUnits.push(name);
       const amt = parseFloat(row.querySelector('.condo-expected-inp').value) || 0;
       if(amt > 0) newExpected[name] = amt;
+      const tenant = row.querySelector('.condo-tenant-inp').value.trim();
+      if(tenant) newTenants[name] = tenant;
       if(original && original !== name) renames.push({ from: original, to: name });
     }
 
@@ -1480,6 +1496,7 @@ window.addEventListener('afterprint', () => { document.title = originalTitle; })
 
     condoUnits = newUnits;
     condoExpectedRent = newExpected;
+    condoTenants = newTenants;
 
     await saveCondoSettings();
     await saveCondoRent();
