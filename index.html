@@ -5,6 +5,74 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Selat Selasih Sdn Bhd — Delivery Transactions</title>
 <link rel="stylesheet" href="style.css">
+<style>
+  /* Reliable truncation for table cells (company / notes) regardless
+     of the table's layout mode. A nested block element respects
+     overflow + text-overflow even when the <td> itself doesn't. */
+  .cell-trunc{
+    display:block;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  /* Rows in list tables that open a detail popup when tapped. */
+  tr.row-tappable{cursor:pointer;}
+  tr.row-tappable:hover td{background:var(--paper-2);}
+
+  /* Detail popup: label/value pairs */
+  .detail-row{
+    display:flex;justify-content:space-between;gap:16px;
+    padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;
+  }
+  .detail-row:last-of-type{border-bottom:none;}
+  .detail-row .k{color:var(--brass-dark);font-weight:600;flex-shrink:0;}
+  .detail-row .v{text-align:right;word-break:break-word;flex:1;min-width:0;}
+  .detail-row .v.tappable{
+    color:var(--forest);text-decoration:underline;cursor:pointer;
+  }
+  .detail-note{
+    margin-top:10px;padding:12px;background:var(--paper-2);
+    border-radius:4px;font-size:13px;line-height:1.55;white-space:pre-wrap;
+  }
+
+  /* Condo unit sections */
+  .condo-unit{
+    background:var(--white);border:1px solid var(--line);border-radius:6px;
+    padding:18px 20px;margin-bottom:18px;
+  }
+  .condo-unit-head{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:12px;flex-wrap:wrap;margin-bottom:14px;
+    padding-bottom:12px;border-bottom:2px solid var(--ink);
+  }
+  .condo-unit-name{font-family:'Fraunces',serif;font-weight:600;font-size:19px;}
+  .condo-unit-stats{display:flex;gap:18px;font-size:12.5px;color:#5c5e56;flex-wrap:wrap;}
+  .condo-unit-stats b{font-family:'IBM Plex Mono',monospace;color:var(--ink);display:block;}
+  .condo-sub-head{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    margin:16px 0 8px;flex-wrap:wrap;
+  }
+  .condo-sub-title{
+    font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--brass-dark);font-weight:600;
+  }
+  .btn-sm{
+    background:transparent;border:1.5px solid var(--ink);border-radius:4px;
+    padding:6px 12px;font-family:'Inter',sans-serif;font-size:12px;
+    font-weight:600;cursor:pointer;color:var(--ink);
+  }
+  .btn-sm:hover{background:var(--line);}
+
+  /* Paid / unpaid status pills */
+  .pill{
+    display:inline-block;padding:3px 9px;border-radius:20px;
+    font-size:11px;font-weight:600;white-space:nowrap;
+  }
+  .pill-paid{background:#E3EFE6;color:var(--forest);}
+  .pill-unpaid{background:#F7E4E0;color:var(--rust);}
+  .pill-partial{background:#F6ECD9;color:var(--brass-dark);}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -22,6 +90,7 @@
         <button id="tab-weigh" class="active">Weigh in</button>
         <button id="tab-ledger">Transactions</button>
         <button id="tab-supplier">Supplier Payments</button>
+        <button id="tab-condo">Condo Rental</button>
         <button id="tab-sheet">Monthly Report</button>
       </nav>
       <button class="icon-btn" id="settings-btn" title="Settings" aria-label="Settings">
@@ -129,6 +198,15 @@
     </div>
   </section>
 
+  <!-- CONDO RENTAL -->
+  <section id="view-condo">
+    <div class="year-row">
+      <select id="condo-year-select"></select>
+      <div class="year-totals" id="condo-year-totals"></div>
+    </div>
+    <div id="condo-units-wrap"></div>
+  </section>
+
 </div>
 
 <div class="modal-bg" id="settings-modal">
@@ -190,7 +268,7 @@
     <h2 id="supplier-modal-title">Add Supplier Payment</h2>
     <div class="field">
       <label>Supplier / company name</label>
-      <input type="text" id="sup-company" placeholder="e.g. GK Aqua Sdn Bhd">
+      <input type="text" id="sup-company" placeholder="e.g. Ocean Fresh Supplies">
     </div>
     <div class="field">
       <label>Invoice number</label>
@@ -231,6 +309,112 @@
     <div class="modal-actions">
       <button class="cancel" id="password-modal-cancel">Cancel</button>
       <button class="save" id="password-modal-submit">Submit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="note-modal">
+  <div class="modal">
+    <h2>Note</h2>
+    <p id="note-modal-text" style="white-space:pre-wrap;line-height:1.5;"></p>
+    <div class="modal-actions">
+      <button class="cancel" id="note-modal-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="supplier-detail-modal">
+  <div class="modal">
+    <h2>Payment Details</h2>
+    <div id="supplier-detail-body"></div>
+    <div class="modal-actions">
+      <button class="cancel" id="supplier-detail-close">Close</button>
+      <button class="cancel" id="supplier-detail-edit">Edit</button>
+      <button class="save" id="supplier-detail-remove" style="background:var(--rust);">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="condo-rent-modal">
+  <div class="modal">
+    <h2 id="condo-rent-modal-title">Record Rent</h2>
+    <div class="field">
+      <label>Unit</label>
+      <input type="text" id="condo-rent-unit" readonly>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Month</label>
+        <select id="condo-rent-month"></select>
+      </div>
+      <div class="field">
+        <label>Amount received</label>
+        <input type="number" id="condo-rent-amount" step="0.01" min="0" placeholder="0.00">
+      </div>
+    </div>
+    <div class="field">
+      <label>Date received</label>
+      <input type="date" id="condo-rent-date">
+    </div>
+    <div class="field">
+      <label>Notes (optional)</label>
+      <textarea id="condo-rent-notes" rows="2" placeholder="e.g. Paid late, partial payment"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="condo-rent-cancel">Cancel</button>
+      <button class="save" id="condo-rent-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="condo-exp-modal">
+  <div class="modal">
+    <h2 id="condo-exp-modal-title">Add Expense</h2>
+    <div class="field">
+      <label>Unit</label>
+      <input type="text" id="condo-exp-unit" readonly>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Category</label>
+        <select id="condo-exp-category">
+          <option value="Management Fee">Management Fee</option>
+          <option value="Repairs">Repairs</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Quit Rent / Assessment">Quit Rent / Assessment</option>
+          <option value="Refund Deposit">Refund Deposit</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Amount</label>
+        <input type="number" id="condo-exp-amount" step="0.01" min="0" placeholder="0.00">
+      </div>
+    </div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="condo-exp-date">
+    </div>
+    <div class="field">
+      <label>Notes (optional)</label>
+      <textarea id="condo-exp-notes" rows="2" placeholder="e.g. Replaced water heater"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="condo-exp-cancel">Cancel</button>
+      <button class="save" id="condo-exp-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="condo-settings-modal">
+  <div class="modal">
+    <h2>Manage Units</h2>
+    <p style="font-size:12.5px;color:#66665f;margin:0 0 14px;">Rename a unit, set its expected monthly rent (used to flag unpaid months), or add a new one.</p>
+    <div id="condo-settings-body"></div>
+    <button class="btn-sm" id="condo-add-unit-btn" style="margin-top:4px;">+ Add another unit</button>
+    <div class="modal-actions">
+      <button class="cancel" id="condo-settings-cancel">Cancel</button>
+      <button class="save" id="condo-settings-save">Save</button>
     </div>
   </div>
 </div>
@@ -292,6 +476,22 @@ async function loadData(){
     const sp = await fbGet('supplierPayments');
     if(sp){ supplierPayments = sp; }
   }catch(e){ supplierPayments = []; }
+  try{
+    const cu = await fbGet('condoUnits');
+    if(cu && cu.length){ condoUnits = cu; }
+  }catch(e){}
+  try{
+    const cr = await fbGet('condoRent');
+    if(cr){ condoRent = cr; }
+  }catch(e){ condoRent = []; }
+  try{
+    const ce = await fbGet('condoExpenses');
+    if(ce){ condoExpenses = ce; }
+  }catch(e){ condoExpenses = []; }
+  try{
+    const cer = await fbGet('condoExpectedRent');
+    if(cer){ condoExpectedRent = cer; }
+  }catch(e){ condoExpectedRent = {}; }
 }
 async function saveSettings(){ await fbSet('settings', settings); }
 async function saveDeliveries(){ await fbSet('deliveries', deliveries); }
@@ -591,19 +791,17 @@ function renderSupplierYearGrid(){
   }
 }
 
+/* Each list row shows only the essentials. Tapping a row opens a
+   detail popup with the full record; the note stays tucked away in
+   there until the invoice number is tapped. Keeps the table narrow
+   and readable no matter how long a note is. */
 function supplierRowHtml(p){
   return `
-    <tr>
+    <tr class="row-tappable" data-id="${p.id}">
       <td class="mono" style="white-space:nowrap;">${escapeHtml(p.invoiceNo)}</td>
-      <td style="white-space:nowrap;">${p.purchaseDate || '—'}</td>
       <td style="white-space:nowrap;">${p.paymentDate}</td>
-      <td>${escapeHtml(p.company)}</td>
+      <td style="max-width:200px;"><div class="cell-trunc" style="max-width:200px;">${escapeHtml(p.company)}</div></td>
       <td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(p.amount)}</td>
-      <td style="max-width:220px;" ${p.notes ? `title="${escapeHtml(p.notes)}"` : ''}>${p.notes ? escapeHtml(p.notes) : '—'}</td>
-      <td style="white-space:nowrap;">
-        <button class="rm-btn edit-btn" data-id="${p.id}" style="margin-right:10px;">Edit</button>
-        <button class="rm-btn" data-id="${p.id}">Remove</button>
-      </td>
     </tr>
   `;
 }
@@ -612,39 +810,59 @@ function supplierTableHtml(list, totalLabel){
   const totalAmt = list.reduce((s,p)=>s+p.amount,0);
   return `
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-    <table class="daybook" style="table-layout:auto;min-width:720px;">
+    <table class="daybook" style="min-width:420px;">
       <thead><tr>
         <th class="mono" style="white-space:nowrap;">Invoice No</th>
-        <th style="white-space:nowrap;">Purchase Date</th>
-        <th style="white-space:nowrap;">Payment Date</th>
+        <th style="white-space:nowrap;">Paid On</th>
         <th>Company</th>
         <th class="mono" style="white-space:nowrap;text-align:right;">Amount</th>
-        <th>Notes</th>
-        <th></th>
       </tr></thead>
       <tbody>${list.map(supplierRowHtml).join('')}</tbody>
-      <tfoot><tr><td colspan="4">${totalLabel}</td><td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(totalAmt)}</td><td></td><td></td></tr></tfoot>
+      <tfoot><tr><td colspan="3">${totalLabel}</td><td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(totalAmt)}</td></tr></tfoot>
     </table>
     </div>
+    <div class="hint" style="font-size:12px;color:#8a8b83;margin-top:8px;">Tap a row to see full details</div>
   `;
 }
 
-function attachSupplierRowHandlers(container, onChanged){
-  container.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const id = e.target.getAttribute('data-id');
-      const entry = supplierPayments.find(p => p.id === id);
-      if(entry) openSupplierModal(entry);
+let supplierDetailId = null;
+let supplierDetailOnChanged = null;
+
+function openSupplierDetail(p, onChanged){
+  supplierDetailId = p.id;
+  supplierDetailOnChanged = onChanged;
+  const hasNotes = !!(p.notes && p.notes.trim());
+  document.getElementById('supplier-detail-body').innerHTML = `
+    <div class="detail-row"><span class="k">Company</span><span class="v">${escapeHtml(p.company)}</span></div>
+    <div class="detail-row">
+      <span class="k">Invoice No</span>
+      <span class="v ${hasNotes ? 'tappable' : ''}" id="supplier-detail-invoice">${escapeHtml(p.invoiceNo)}${hasNotes ? ' 📝' : ''}</span>
+    </div>
+    <div class="detail-row"><span class="k">Purchase Date</span><span class="v">${p.purchaseDate || '—'}</span></div>
+    <div class="detail-row"><span class="k">Payment Date</span><span class="v">${p.paymentDate}</span></div>
+    <div class="detail-row"><span class="k">Amount Paid</span><span class="v"><b>${fmtMoneyC(p.amount)}</b></span></div>
+    ${hasNotes ? `<div class="detail-note" id="supplier-detail-note" style="display:none;">${escapeHtml(p.notes)}</div>
+    <div style="font-size:11.5px;color:#8a8b83;margin-top:8px;">Tap the invoice number to show notes</div>` : ''}
+  `;
+  if(hasNotes){
+    document.getElementById('supplier-detail-invoice').addEventListener('click', () => {
+      const note = document.getElementById('supplier-detail-note');
+      note.style.display = note.style.display === 'none' ? 'block' : 'none';
     });
-  });
-  container.querySelectorAll('.rm-btn:not(.edit-btn)').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const id = e.target.getAttribute('data-id');
-      if(!confirm('Remove this payment record?')) return;
-      supplierPayments = supplierPayments.filter(p => p.id !== id);
-      await saveSupplierPayments();
-      onChanged();
-      renderSupplierYearGrid();
+  }
+  document.getElementById('supplier-detail-modal').classList.add('show');
+}
+function closeSupplierDetail(){
+  document.getElementById('supplier-detail-modal').classList.remove('show');
+  supplierDetailId = null;
+}
+
+function attachSupplierRowHandlers(container, onChanged){
+  container.querySelectorAll('tr.row-tappable').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = row.getAttribute('data-id');
+      const entry = supplierPayments.find(p => p.id === id);
+      if(entry) openSupplierDetail(entry, onChanged);
     });
   });
 }
@@ -701,6 +919,14 @@ function renderSupplierSearchResults(query){
   attachSupplierRowHandlers(box, () => renderSupplierSearchResults(document.getElementById('supplier-search-input').value));
 }
 
+function openNoteModal(text){
+  document.getElementById('note-modal-text').textContent = text;
+  document.getElementById('note-modal').classList.add('show');
+}
+function closeNoteModal(){
+  document.getElementById('note-modal').classList.remove('show');
+}
+
 function openSupplierModal(existing){
   editingSupplierId = existing ? existing.id : null;
   document.getElementById('supplier-modal-title').textContent = existing ? 'Edit Supplier Payment' : 'Add Supplier Payment';
@@ -717,6 +943,276 @@ function closeSupplierModal(){
   editingSupplierId = null;
 }
 
+/* ---------- CONDO RENTAL ---------- */
+const DEFAULT_CONDO_UNITS = ['A-18-16', 'A-18-18', 'B-15-08'];
+let condoUnits = DEFAULT_CONDO_UNITS.slice();
+let condoRent = [];      // {id, unit, month:'2026-09', amount, dateReceived, notes}
+let condoExpenses = [];  // {id, unit, date, category, amount, notes}
+let condoExpectedRent = {}; // {unit: monthlyAmount} — used to flag unpaid months
+let condoCurrentYear = new Date().getFullYear();
+let condoModalUnit = null;
+let editingCondoRentId = null;
+let editingCondoExpId = null;
+
+async function saveCondoRent(){ await fbSet('condoRent', condoRent); }
+async function saveCondoExpenses(){ await fbSet('condoExpenses', condoExpenses); }
+async function saveCondoSettings(){
+  await fbSet('condoUnits', condoUnits);
+  await fbSet('condoExpectedRent', condoExpectedRent);
+}
+
+function monthKey(year, monthIndex){
+  return year + '-' + String(monthIndex + 1).padStart(2, '0');
+}
+
+/* Returns the payment status for one unit in one month:
+   paid (met or exceeded expected), partial (some but not all),
+   or unpaid (nothing received). With no expected rent set, any
+   payment counts as paid and an empty month is simply blank. */
+function rentStatus(unit, year, monthIndex){
+  const key = monthKey(year, monthIndex);
+  const entries = condoRent.filter(r => r.unit === unit && r.month === key);
+  const received = entries.reduce((s,r) => s + (r.amount||0), 0);
+  const expected = parseFloat(condoExpectedRent[unit]) || 0;
+  if(received <= 0) return { status:'unpaid', received:0, expected, entries };
+  if(expected > 0 && received + 0.001 < expected) return { status:'partial', received, expected, entries };
+  return { status:'paid', received, expected, entries };
+}
+
+function pillHtml(status){
+  if(status === 'paid')    return '<span class="pill pill-paid">Paid</span>';
+  if(status === 'partial') return '<span class="pill pill-partial">Partial</span>';
+  return '<span class="pill pill-unpaid">Unpaid</span>';
+}
+
+function buildCondoView(){
+  const sel = document.getElementById('condo-year-select');
+  const ys = new Set();
+  condoRent.forEach(r => ys.add(parseInt(r.month.slice(0,4))));
+  condoExpenses.forEach(e => ys.add(parseInt(e.date.slice(0,4))));
+  ys.add(new Date().getFullYear());
+  const years = Array.from(ys).sort((a,b)=>b-a);
+  sel.innerHTML = years.map(y => `<option value="${y}" ${y===condoCurrentYear?'selected':''}>${y}</option>`).join('');
+  renderCondoUnits();
+}
+
+function renderCondoUnits(){
+  const y = condoCurrentYear;
+  const now = new Date();
+  const lastMonth = (y < now.getFullYear()) ? 11 : now.getMonth();
+
+  let grandRent = 0, grandExp = 0, grandUnpaid = 0;
+
+  const wrap = document.getElementById('condo-units-wrap');
+  wrap.innerHTML = condoUnits.map(unit => {
+    const yearRent = condoRent.filter(r => r.unit === unit && parseInt(r.month.slice(0,4)) === y);
+    const yearExp  = condoExpenses.filter(e => e.unit === unit && parseInt(e.date.slice(0,4)) === y);
+    const totalRent = yearRent.reduce((s,r)=>s+(r.amount||0),0);
+    const totalExp  = yearExp.reduce((s,e)=>s+(e.amount||0),0);
+    const net = totalRent - totalExp;
+
+    // Count unpaid months up to the current month only (future months
+    // aren't overdue yet, so flagging them would be noise).
+    let unpaidCount = 0;
+    const rentRows = [];
+    for(let m = 0; m <= lastMonth; m++){
+      const st = rentStatus(unit, y, m);
+      if(st.status !== 'paid') unpaidCount++;
+      rentRows.push(`
+        <tr>
+          <td style="white-space:nowrap;">${MONTHS[m].slice(0,3)}</td>
+          <td class="mono" style="white-space:nowrap;text-align:right;">${st.received ? fmtMoneyC(st.received) : '—'}</td>
+          <td style="white-space:nowrap;">${pillHtml(st.status)}</td>
+          <td style="white-space:nowrap;text-align:right;">
+            <button class="rm-btn condo-rent-add" data-unit="${escapeHtml(unit)}" data-month="${m}">${st.received ? 'Edit' : 'Record'}</button>
+          </td>
+        </tr>
+      `);
+    }
+
+    const expRows = yearExp.length === 0
+      ? `<tr><td colspan="4" style="color:#8a8b83;">No expenses recorded</td></tr>`
+      : yearExp.sort((a,b)=>a.date.localeCompare(b.date)).map(e => `
+          <tr>
+            <td style="white-space:nowrap;">${e.date}</td>
+            <td style="max-width:150px;"><div class="cell-trunc" style="max-width:150px;">${escapeHtml(e.category)}</div></td>
+            <td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(e.amount)}</td>
+            <td style="white-space:nowrap;text-align:right;">
+              <button class="rm-btn condo-exp-edit" data-id="${e.id}">Edit</button>
+              <button class="rm-btn condo-exp-remove" data-id="${e.id}" style="margin-left:8px;">Remove</button>
+            </td>
+          </tr>
+        `).join('');
+
+    grandRent += totalRent; grandExp += totalExp; grandUnpaid += unpaidCount;
+
+    return `
+      <div class="condo-unit">
+        <div class="condo-unit-head">
+          <div class="condo-unit-name">${escapeHtml(unit)}</div>
+          <div class="condo-unit-stats">
+            <span>Rent collected<b>${fmtMoneyC(totalRent)}</b></span>
+            <span>Expenses<b>${fmtMoneyC(totalExp)}</b></span>
+            <span>Net<b style="color:${net>=0?'var(--forest)':'var(--rust)'}">${fmtMoneyC(net)}</b></span>
+            ${unpaidCount > 0 ? `<span>Months outstanding<b style="color:var(--rust)">${unpaidCount}</b></span>` : ''}
+          </div>
+        </div>
+
+        <div class="condo-sub-head">
+          <div class="condo-sub-title">Rent received</div>
+        </div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <table class="daybook" style="min-width:360px;">
+            <thead><tr>
+              <th style="white-space:nowrap;">Month</th>
+              <th class="mono" style="white-space:nowrap;text-align:right;">Received</th>
+              <th style="white-space:nowrap;">Status</th>
+              <th></th>
+            </tr></thead>
+            <tbody>${rentRows.join('')}</tbody>
+          </table>
+        </div>
+
+        <div class="condo-sub-head">
+          <div class="condo-sub-title">Expenses</div>
+          <button class="btn-sm condo-exp-add" data-unit="${escapeHtml(unit)}">+ Add expense</button>
+        </div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <table class="daybook" style="min-width:360px;">
+            <thead><tr>
+              <th style="white-space:nowrap;">Date</th>
+              <th>Category</th>
+              <th class="mono" style="white-space:nowrap;text-align:right;">Amount</th>
+              <th></th>
+            </tr></thead>
+            <tbody>${expRows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('condo-year-totals').innerHTML =
+    `<span>Total rent: <b>${fmtMoneyC(grandRent)}</b></span>
+     <span>Total expenses: <b>${fmtMoneyC(grandExp)}</b></span>
+     <span>Net: <b>${fmtMoneyC(grandRent - grandExp)}</b></span>
+     ${grandUnpaid > 0 ? `<span>Outstanding months: <b style="color:var(--rust)">${grandUnpaid}</b></span>` : ''}
+     <button class="btn-sm" id="condo-settings-btn" style="margin-left:4px;">Manage units</button>`;
+
+  attachCondoHandlers();
+}
+
+function attachCondoHandlers(){
+  document.querySelectorAll('.condo-rent-add').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openCondoRentModal(btn.getAttribute('data-unit'), parseInt(btn.getAttribute('data-month')));
+    });
+  });
+  document.querySelectorAll('.condo-exp-add').forEach(btn => {
+    btn.addEventListener('click', () => openCondoExpModal(btn.getAttribute('data-unit')));
+  });
+  document.querySelectorAll('.condo-exp-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const e = condoExpenses.find(x => x.id === btn.getAttribute('data-id'));
+      if(e) openCondoExpModal(e.unit, e);
+    });
+  });
+  document.querySelectorAll('.condo-exp-remove').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if(!confirm('Remove this expense?')) return;
+      condoExpenses = condoExpenses.filter(x => x.id !== btn.getAttribute('data-id'));
+      await saveCondoExpenses();
+      renderCondoUnits();
+    });
+  });
+  const setBtn = document.getElementById('condo-settings-btn');
+  if(setBtn) setBtn.addEventListener('click', openCondoSettings);
+}
+
+function openCondoRentModal(unit, monthIndex){
+  condoModalUnit = unit;
+  const key = monthKey(condoCurrentYear, monthIndex);
+  const existing = condoRent.find(r => r.unit === unit && r.month === key);
+  editingCondoRentId = existing ? existing.id : null;
+
+  document.getElementById('condo-rent-modal-title').textContent = existing ? 'Edit Rent Record' : 'Record Rent';
+  document.getElementById('condo-rent-unit').value = unit;
+  const sel = document.getElementById('condo-rent-month');
+  sel.innerHTML = MONTHS.map((m,i) =>
+    `<option value="${i}" ${i===monthIndex?'selected':''}>${m} ${condoCurrentYear}</option>`).join('');
+  document.getElementById('condo-rent-amount').value = existing ? existing.amount : (condoExpectedRent[unit] || '');
+  document.getElementById('condo-rent-date').value = existing ? (existing.dateReceived || '') : todayStr();
+  document.getElementById('condo-rent-notes').value = existing ? (existing.notes || '') : '';
+  document.getElementById('condo-rent-modal').classList.add('show');
+}
+function closeCondoRentModal(){
+  document.getElementById('condo-rent-modal').classList.remove('show');
+  editingCondoRentId = null; condoModalUnit = null;
+}
+
+function openCondoExpModal(unit, existing){
+  condoModalUnit = unit;
+  editingCondoExpId = existing ? existing.id : null;
+  document.getElementById('condo-exp-modal-title').textContent = existing ? 'Edit Expense' : 'Add Expense';
+  document.getElementById('condo-exp-unit').value = unit;
+  document.getElementById('condo-exp-category').value = existing ? existing.category : 'Management Fee';
+  document.getElementById('condo-exp-amount').value = existing ? existing.amount : '';
+  document.getElementById('condo-exp-date').value = existing ? existing.date : todayStr();
+  document.getElementById('condo-exp-notes').value = existing ? (existing.notes || '') : '';
+  document.getElementById('condo-exp-modal').classList.add('show');
+}
+function closeCondoExpModal(){
+  document.getElementById('condo-exp-modal').classList.remove('show');
+  editingCondoExpId = null; condoModalUnit = null;
+}
+
+/* The unit manager lets units be renamed, removed, or added. Each row
+   keeps the unit's ORIGINAL name in data-original so that on save we
+   can migrate existing rent/expense records to the new name — without
+   that, renaming a unit would orphan all of its history. */
+function condoUnitRowHtml(unit, expected){
+  return `
+    <div class="condo-unit-edit" style="border:1px solid var(--line);border-radius:4px;padding:12px;margin-bottom:10px;">
+      <div class="field-row" style="margin-bottom:0;">
+        <div class="field">
+          <label>Unit name</label>
+          <input type="text" class="condo-unit-name-inp" data-original="${escapeHtml(unit)}" value="${escapeHtml(unit)}" placeholder="e.g. C-12-04">
+        </div>
+        <div class="field">
+          <label>Expected rent / month</label>
+          <input type="number" class="condo-expected-inp" step="0.01" min="0" value="${expected || ''}" placeholder="0.00">
+        </div>
+      </div>
+      <button class="rm-btn condo-remove-unit" style="margin-top:8px;">Remove this unit</button>
+    </div>
+  `;
+}
+
+function openCondoSettings(){
+  document.getElementById('condo-settings-body').innerHTML =
+    condoUnits.map(u => condoUnitRowHtml(u, condoExpectedRent[u])).join('');
+  attachCondoSettingsHandlers();
+  document.getElementById('condo-settings-modal').classList.add('show');
+}
+
+function attachCondoSettingsHandlers(){
+  document.querySelectorAll('.condo-remove-unit').forEach(btn => {
+    btn.onclick = () => {
+      const row = btn.closest('.condo-unit-edit');
+      const name = row.querySelector('.condo-unit-name-inp').getAttribute('data-original');
+      const rentCount = condoRent.filter(r => r.unit === name).length;
+      const expCount  = condoExpenses.filter(e => e.unit === name).length;
+      const records = rentCount + expCount;
+      if(records > 0){
+        if(!confirm(`"${name}" has ${records} saved record${records===1?'':'s'} (rent and expenses). Removing the unit will delete them permanently. Continue?`)) return;
+      }
+      row.remove();
+    };
+  });
+}
+
+function closeCondoSettings(){ document.getElementById('condo-settings-modal').classList.remove('show'); }
+
 /* ---------- NAV ---------- */
 function showView(id){
   document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
@@ -724,6 +1220,7 @@ function showView(id){
   document.getElementById('tab-weigh').classList.toggle('active', id === 'view-weigh');
   document.getElementById('tab-ledger').classList.toggle('active', id === 'view-ledger');
   document.getElementById('tab-supplier').classList.toggle('active', id === 'view-supplier');
+  document.getElementById('tab-condo').classList.toggle('active', id === 'view-condo');
 }
 
 /* ---------- SETTINGS MODAL ---------- */
@@ -878,6 +1375,137 @@ window.addEventListener('afterprint', () => { document.title = originalTitle; })
 
   document.getElementById('settings-btn').addEventListener('click', openSettingsGated);
 
+  /* Condo Rental tab */
+  document.getElementById('tab-condo').addEventListener('click', () => {
+    buildCondoView();
+    showView('view-condo');
+  });
+  document.getElementById('condo-year-select').addEventListener('change', (e) => {
+    condoCurrentYear = parseInt(e.target.value);
+    renderCondoUnits();
+  });
+
+  document.getElementById('condo-rent-cancel').addEventListener('click', closeCondoRentModal);
+  document.getElementById('condo-rent-save').addEventListener('click', async () => {
+    const unit = document.getElementById('condo-rent-unit').value;
+    const monthIndex = parseInt(document.getElementById('condo-rent-month').value);
+    const amount = parseFloat(document.getElementById('condo-rent-amount').value) || 0;
+    const dateReceived = document.getElementById('condo-rent-date').value;
+    const notes = document.getElementById('condo-rent-notes').value.trim();
+    if(!amount || amount <= 0){ alert('Enter an amount greater than 0.'); return; }
+    const key = monthKey(condoCurrentYear, monthIndex);
+
+    if(editingCondoRentId){
+      const ex = condoRent.find(r => r.id === editingCondoRentId);
+      if(ex){ ex.unit = unit; ex.month = key; ex.amount = amount; ex.dateReceived = dateReceived; ex.notes = notes; }
+    }else{
+      condoRent.push({
+        id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+        unit, month: key, amount, dateReceived, notes
+      });
+    }
+    await saveCondoRent();
+    closeCondoRentModal();
+    buildCondoView();
+  });
+
+  document.getElementById('condo-exp-cancel').addEventListener('click', closeCondoExpModal);
+  document.getElementById('condo-exp-save').addEventListener('click', async () => {
+    const unit = document.getElementById('condo-exp-unit').value;
+    const category = document.getElementById('condo-exp-category').value;
+    const amount = parseFloat(document.getElementById('condo-exp-amount').value) || 0;
+    const date = document.getElementById('condo-exp-date').value;
+    const notes = document.getElementById('condo-exp-notes').value.trim();
+    if(!amount || amount <= 0){ alert('Enter an amount greater than 0.'); return; }
+    if(!date){ alert('Enter a date.'); return; }
+
+    if(editingCondoExpId){
+      const ex = condoExpenses.find(x => x.id === editingCondoExpId);
+      if(ex){ ex.unit = unit; ex.category = category; ex.amount = amount; ex.date = date; ex.notes = notes; }
+    }else{
+      condoExpenses.push({
+        id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+        unit, category, amount, date, notes
+      });
+    }
+    await saveCondoExpenses();
+    closeCondoExpModal();
+    buildCondoView();
+  });
+
+  document.getElementById('condo-settings-cancel').addEventListener('click', closeCondoSettings);
+  document.getElementById('condo-add-unit-btn').addEventListener('click', () => {
+    document.getElementById('condo-settings-body').insertAdjacentHTML('beforeend', condoUnitRowHtml('', ''));
+    attachCondoSettingsHandlers();
+  });
+  document.getElementById('condo-settings-save').addEventListener('click', async () => {
+    const rows = Array.from(document.querySelectorAll('.condo-unit-edit'));
+    const newUnits = [];
+    const newExpected = {};
+    const renames = []; // {from, to} — applied to existing records below
+
+    for(const row of rows){
+      const nameInp = row.querySelector('.condo-unit-name-inp');
+      const name = nameInp.value.trim();
+      const original = nameInp.getAttribute('data-original');
+      if(!name) continue; // blank rows are just skipped
+      if(newUnits.includes(name)){
+        alert(`Duplicate unit name: "${name}". Each unit needs a unique name.`);
+        return;
+      }
+      newUnits.push(name);
+      const amt = parseFloat(row.querySelector('.condo-expected-inp').value) || 0;
+      if(amt > 0) newExpected[name] = amt;
+      if(original && original !== name) renames.push({ from: original, to: name });
+    }
+
+    if(newUnits.length === 0){ alert('Keep at least one unit.'); return; }
+
+    // Carry existing rent and expense records over to renamed units.
+    renames.forEach(({from, to}) => {
+      condoRent.forEach(r => { if(r.unit === from) r.unit = to; });
+      condoExpenses.forEach(e => { if(e.unit === from) e.unit = to; });
+    });
+
+    // Drop records belonging to units that were removed entirely.
+    const removed = condoUnits.filter(u => {
+      const renamedTo = renames.find(r => r.from === u);
+      const finalName = renamedTo ? renamedTo.to : u;
+      return !newUnits.includes(finalName);
+    });
+    if(removed.length){
+      condoRent = condoRent.filter(r => !removed.includes(r.unit));
+      condoExpenses = condoExpenses.filter(e => !removed.includes(e.unit));
+    }
+
+    condoUnits = newUnits;
+    condoExpectedRent = newExpected;
+
+    await saveCondoSettings();
+    await saveCondoRent();
+    await saveCondoExpenses();
+    closeCondoSettings();
+    buildCondoView();
+  });
+
+  /* Supplier detail popup */
+  document.getElementById('supplier-detail-close').addEventListener('click', closeSupplierDetail);
+  document.getElementById('supplier-detail-edit').addEventListener('click', () => {
+    const entry = supplierPayments.find(p => p.id === supplierDetailId);
+    closeSupplierDetail();
+    if(entry) openSupplierModal(entry);
+  });
+  document.getElementById('supplier-detail-remove').addEventListener('click', async () => {
+    if(!confirm('Remove this payment record?')) return;
+    const onChanged = supplierDetailOnChanged;
+    supplierPayments = supplierPayments.filter(p => p.id !== supplierDetailId);
+    await saveSupplierPayments();
+    closeSupplierDetail();
+    if(onChanged) onChanged();
+    renderSupplierYearGrid();
+  });
+
+  document.getElementById('note-modal-close').addEventListener('click', closeNoteModal);
   document.getElementById('password-modal-cancel').addEventListener('click', closePasswordModal);
   document.getElementById('password-modal-submit').addEventListener('click', submitPasswordModal);
   document.getElementById('password-modal-input').addEventListener('keydown', (e) => {
