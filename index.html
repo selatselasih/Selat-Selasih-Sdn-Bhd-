@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Selat Selasih Sdn Bhd — Delivery Transactions</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=4">
 <style>
   /* Reliable truncation for table cells (company / notes) regardless
      of the table's layout mode. A nested block element respects
@@ -86,6 +86,9 @@
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
+      <button class="menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E2420" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <nav class="tabs">
         <button id="tab-weigh" class="active">Weigh in</button>
         <button id="tab-ledger">Transactions</button>
@@ -409,7 +412,6 @@
 <div class="modal-bg" id="condo-settings-modal">
   <div class="modal">
     <h2>Manage Units</h2>
-    <p style="font-size:12.5px;color:#66665f;margin:0 0 14px;">Rename a unit, set its expected monthly rent (used to flag unpaid months), or add a new one.</p>
     <div id="condo-settings-body"></div>
     <button class="btn-sm" id="condo-add-unit-btn" style="margin-top:4px;">+ Add another unit</button>
     <div class="modal-actions">
@@ -1388,6 +1390,27 @@ window.addEventListener('afterprint', () => { document.title = originalTitle; })
   });
 
   document.getElementById('settings-btn').addEventListener('click', openSettingsGated);
+
+  /* Hamburger menu (mobile only — CSS hides this button on desktop) */
+  const menuBtn = document.getElementById('menu-btn');
+  const navTabs = document.querySelector('nav.tabs');
+  function closeMenu(){
+    navTabs.classList.remove('open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+  }
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = navTabs.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', String(isOpen));
+  });
+  navTabs.addEventListener('click', (e) => {
+    if(e.target.tagName === 'BUTTON') closeMenu();
+  });
+  document.addEventListener('click', (e) => {
+    if(navTabs.classList.contains('open') && !navTabs.contains(e.target) && e.target !== menuBtn && !menuBtn.contains(e.target)){
+      closeMenu();
+    }
+  });
 
   /* Condo Rental tab */
   document.getElementById('tab-condo').addEventListener('click', () => {
