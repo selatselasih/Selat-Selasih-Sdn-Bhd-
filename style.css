@@ -37,14 +37,20 @@ h1{
 }
 .tagline{font-size:12px;color:var(--brass-dark);text-transform:uppercase;letter-spacing:0.12em;margin-top:2px;}
 
-nav.tabs{display:flex;gap:8px;flex-wrap:wrap;}
+nav.tabs{
+  display:flex;gap:8px;flex-wrap:nowrap;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  min-width:0;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+nav.tabs::-webkit-scrollbar{display:none;}
 nav.tabs button{
   font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
   background:transparent;border:1.5px solid var(--ink);
   color:var(--ink);padding:9px 16px;cursor:pointer;
   border-radius:2px;letter-spacing:0.02em;
   transition:background .15s,color .15s;
-  white-space:nowrap;
+  white-space:nowrap;flex-shrink:0;
 }
 nav.tabs button.active{background:var(--ink);color:var(--paper);}
 nav.tabs button:hover:not(.active){background:var(--line);}
@@ -110,30 +116,32 @@ section.active{display:block;}
 .field textarea{resize:vertical;min-height:40px;font-family:'Inter',sans-serif;}
 .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--brass);outline-offset:0;}
 
-/* iOS Safari renders type=date with its own internal widget that
-   ignores text-align, font-family and font-weight almost entirely —
-   no CSS trick fixes that reliably. Instead, the native input is made
-   fully invisible but still clickable/tappable (so it still opens
-   Apple's date picker), and a custom-styled div on top shows the date
-   exactly like every other field: left-aligned, same font, same size. */
+/* iOS Safari's native date-input text can't reliably be styled (font,
+   alignment, weight are largely ignored), and overlaying an invisible
+   input on top of a display box is not reliably positioned by iOS
+   either — it can leave a duplicate box visible underneath. Instead,
+   the real <input type=date> is fully removed from the visual layout
+   (near-zero size, opacity 0, not directly tappable), and the visible
+   box below is a plain div that opens the picker via showPicker() on
+   tap. Only one thing is ever rendered on screen: this div. */
 .date-field{position:relative;}
 .date-field input[type=date]{
-  position:absolute;inset:0;
-  width:100%;height:100%;
-  margin:0;padding:0;border:none;
+  position:absolute;
+  width:1px;height:1px;
+  padding:0;margin:0;border:none;
   opacity:0;
-  -webkit-appearance:none;appearance:none;
-  cursor:pointer;
-  z-index:2;
+  pointer-events:none;
+  left:0;top:0;
 }
 .date-display{
   width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:4px;
   font-family:'Inter',sans-serif;font-size:16px;font-weight:400;line-height:1.3;
   background:var(--paper);color:var(--ink);
-  pointer-events:none;
+  cursor:pointer;
   min-height:20px;
   box-sizing:border-box;
 }
+.date-display:focus{outline:2px solid var(--brass);outline-offset:0;}
 
 .rate-line{font-size:12px;color:#66665f;margin-bottom:20px;}
 .rate-line button.linklike{
