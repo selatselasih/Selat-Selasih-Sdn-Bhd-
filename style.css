@@ -27,6 +27,18 @@ header.top{
   border-bottom:3px solid var(--ink);
   padding-bottom:16px;margin-bottom:28px;
   flex-wrap:wrap;gap:12px;
+  position:relative;
+}
+/* This div is the nav+settings wrapper in the HTML (header.top's second
+   child). flex:1 gives it flex-basis:0, which secretly tells the browser
+   "this item takes no space" when deciding whether header.top should wrap
+   — so it never wraps, and instead the tabs get squeezed into whatever
+   sliver is left after the brand name. Forcing header.top to stack
+   vertically below this breakpoint sidesteps that and gives the second
+   row the full width. */
+@media (max-width:640px){
+  header.top{flex-direction:column;align-items:stretch;}
+  header.top > div:not(.brandmark){width:100%;}
 }
 .brandmark{display:flex;align-items:center;gap:12px;}
 .scale-icon{font-size:32px;line-height:1;flex-shrink:0;}
@@ -61,6 +73,53 @@ nav.tabs button:hover:not(.active){background:var(--line);}
   cursor:pointer;color:var(--ink);flex-shrink:0;
 }
 .icon-btn:hover{background:var(--line);}
+
+/* Hamburger menu button — hidden on desktop, where the tabs show inline.
+   On mobile it replaces the tab row: tap it and the tabs drop down as a
+   list anchored to the top-left corner of the header instead of trying
+   to fit five buttons across a narrow screen. */
+.menu-btn{
+  display:none;
+  background:transparent;border:1.5px solid var(--ink);border-radius:2px;
+  width:36px;height:36px;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--ink);flex-shrink:0;
+}
+.menu-btn:hover{background:var(--line);}
+
+@media (max-width:640px){
+  .menu-btn{display:flex;}
+
+  nav.tabs{
+    display:none;
+    position:absolute;
+    top:calc(100% + 8px);
+    left:0;
+    flex-direction:column;
+    background:var(--white);
+    border:1.5px solid var(--ink);
+    border-radius:4px;
+    padding:6px;
+    min-width:200px;
+    max-width:calc(100vw - 40px);
+    box-shadow:0 8px 20px rgba(30,36,32,0.2);
+    z-index:60;
+    overflow-x:visible;
+  }
+  nav.tabs.open{display:flex;}
+  nav.tabs button{
+    width:100%;
+    text-align:left;
+    border:none;
+    border-radius:3px;
+    padding:11px 14px;
+  }
+  nav.tabs button.active{
+    background:var(--paper-2);color:var(--ink);
+    border-left:3px solid var(--forest);
+    padding-left:11px;
+  }
+  nav.tabs button:hover:not(.active){background:var(--paper-2);}
+}
 
 section{display:none;}
 section.active{display:block;}
