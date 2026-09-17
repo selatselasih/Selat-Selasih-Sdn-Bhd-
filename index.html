@@ -47,7 +47,7 @@
     padding-bottom:12px;border-bottom:2px solid var(--ink);
   }
   .condo-unit-name{font-family:'Fraunces',serif;font-weight:600;font-size:19px;}
-  .condo-unit-stats{display:flex;gap:18px;font-size:12.5px;color:#5c5e56;flex-wrap:wrap;}
+  .condo-unit-stats{display:flex;gap:18px;font-size:12.5px;color:#5A6862;flex-wrap:wrap;}
   .condo-unit-stats b{font-family:'IBM Plex Mono',monospace;color:var(--ink);display:block;}
   .condo-sub-head{
     display:flex;justify-content:space-between;align-items:center;gap:10px;
@@ -69,9 +69,9 @@
     display:inline-block;padding:3px 9px;border-radius:20px;
     font-size:11px;font-weight:600;white-space:nowrap;
   }
-  .pill-paid{background:#E3EFE6;color:var(--forest);}
-  .pill-unpaid{background:#F7E4E0;color:var(--rust);}
-  .pill-partial{background:#F6ECD9;color:var(--brass-dark);}
+  .pill-paid{background:#DCEAE4;color:var(--forest);}
+  .pill-unpaid{background:#F3DFD8;color:var(--rust);}
+  .pill-partial{background:#F2E8D2;color:var(--brass-dark);}
 </style>
 </head>
 <body>
@@ -87,7 +87,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
       <button class="menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E2420" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F2E2B" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <nav class="tabs">
         <button id="tab-weigh" class="active">Weigh in</button>
@@ -97,7 +97,7 @@
         <button id="tab-sheet">Monthly Report</button>
       </nav>
       <button class="icon-btn" id="settings-btn" title="Settings" aria-label="Settings">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E2420" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F2E2B" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       </button>
     </div>
   </header>
@@ -145,7 +145,7 @@
 
       <div class="field-row">
         <div class="field">
-          <label for="address-input">Customer address (saved for next time)</label>
+          <label for="address-input">Customer address</label>
           <textarea id="address-input" rows="2" placeholder="No.6387, Machal Umboo, 78000 Alor Gajah, Melaka"></textarea>
         </div>
       </div>
@@ -827,7 +827,7 @@ function supplierTableHtml(list, totalLabel){
       <tfoot><tr><td colspan="3">${totalLabel}</td><td class="mono" style="white-space:nowrap;text-align:right;">${fmtMoneyC(totalAmt)}</td></tr></tfoot>
     </table>
     </div>
-    <div class="hint" style="font-size:12px;color:#8a8b83;margin-top:8px;">Tap a row to see full details</div>
+    <div class="hint" style="font-size:12px;color:#7C8B84;margin-top:8px;">Tap a row to see full details</div>
   `;
 }
 
@@ -848,7 +848,7 @@ function openSupplierDetail(p, onChanged){
     <div class="detail-row"><span class="k">Payment Date</span><span class="v">${p.paymentDate}</span></div>
     <div class="detail-row"><span class="k">Amount Paid</span><span class="v"><b>${fmtMoneyC(p.amount)}</b></span></div>
     ${hasNotes ? `<div class="detail-note" id="supplier-detail-note" style="display:none;">${escapeHtml(p.notes)}</div>
-    <div style="font-size:11.5px;color:#8a8b83;margin-top:8px;">Tap the invoice number to show notes</div>` : ''}
+    <div style="font-size:11.5px;color:#7C8B84;margin-top:8px;">Tap the invoice number to show notes</div>` : ''}
   `;
   if(hasNotes){
     document.getElementById('supplier-detail-invoice').addEventListener('click', () => {
@@ -1039,7 +1039,7 @@ function renderCondoUnits(){
     }
 
     const expRows = yearExp.length === 0
-      ? `<tr><td colspan="4" style="color:#8a8b83;">No expenses recorded</td></tr>`
+      ? `<tr><td colspan="4" style="color:#7C8B84;">No expenses recorded</td></tr>`
       : yearExp.sort((a,b)=>a.date.localeCompare(b.date)).map(e => `
           <tr>
             <td style="white-space:nowrap;">${e.date}</td>
@@ -1059,7 +1059,7 @@ function renderCondoUnits(){
         <div class="condo-unit-head">
           <div>
             <div class="condo-unit-name">${escapeHtml(unit)}</div>
-            ${condoTenants[unit] ? `<div style="font-size:12.5px;color:#66665f;margin-top:2px;">Tenant: ${escapeHtml(condoTenants[unit])}</div>` : `<div style="font-size:12.5px;color:#a8a99f;margin-top:2px;font-style:italic;">No tenant on file</div>`}
+            ${condoTenants[unit] ? `<div style="font-size:12.5px;color:#5F6B63;margin-top:2px;">Tenant: ${escapeHtml(condoTenants[unit])}</div>` : `<div style="font-size:12.5px;color:#A6ADA3;margin-top:2px;font-style:italic;">No tenant on file</div>`}
           </div>
           <div class="condo-unit-stats">
             <span>Rent collected<b>${fmtMoneyC(totalRent)}</b></span>
@@ -1083,7 +1083,7 @@ function renderCondoUnits(){
             <tbody>${rentRows.join('')}</tbody>
           </table>
         </div>
-        <div style="font-size:11px;color:#a8a99f;margin-top:4px;">Swipe left/right if a row runs off screen</div>
+        
 
         <div class="condo-sub-head">
           <div class="condo-sub-title">Expenses</div>
