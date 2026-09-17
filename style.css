@@ -2,14 +2,14 @@
 
 :root{
   --ink:#1F2E2B;
-  --paper:#F3EFE4;
-  --paper-2:#E8E0CD;
+  --paper:#f0efec;
+  --paper-2:#e0d5bc;
   --brass:#B08D57;
   --brass-dark:#8A6D3E;
-  --forest:#2F6B5E;
+  --forest:#2d3e2f;
   --rust:#B0533E;
   --line:#D9CFB8;
-  --white:#FFFDF6;
+  --white:#ffffff;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;overflow-x:hidden;}
